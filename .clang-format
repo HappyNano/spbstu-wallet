@@ -1,0 +1,68 @@
+---
+BasedOnStyle: Microsoft
+AccessModifierOffset: -4
+AlignAfterOpenBracket: AlwaysBreak
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments:
+  Enabled: true
+AlignConsecutiveMacros:
+  Enabled: true
+  AlignCompound: true
+  PadOperators: true
+AlignOperands: AlignAfterOperator
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: MultiLine
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: true
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: true
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+BreakBeforeBinaryOperators: All
+BreakConstructorInitializers: BeforeComma
+BreakStringLiterals: false
+ColumnLimit: 0
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 1
+Cpp11BracedListStyle: false
+EmptyLineBeforeAccessModifier: Always
+FixNamespaceComments: false
+IndentWrappedFunctionNames: true
+InsertBraces: true
+NamespaceIndentation: All
+PackConstructorInitializers: Never
+PenaltyIndentedWhitespace: 1
+PointerAlignment: Middle
+QualifierAlignment: Custom
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
+SpaceBeforeRangeBasedForLoopColon: false
+SpacesInAngles: true
+AllowAllConstructorInitializersOnNextLine: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+UseCRLF: false
+QualifierOrder:
+  - inline
+  - static
+  - const
+  - volatile
+  - type

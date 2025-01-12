@@ -1,0 +1,112 @@
+Checks: '-*,
+  bugprone-inaccurate-erase,
+  bugprone-infinite-loop,
+  bugprone-redundant-branch-condition,
+  bugprone-unhandled-self-assignment,
+  bugprone-unhandled-exception-at-new,
+
+  llvm-namespace-comment
+
+  cppcoreguidelines-prefer-member-initializer,
+
+  readability-identifier-naming,
+  readability-avoid-const-params-in-decls,
+  readability-braces-around-statements,
+
+  readability-container-size-empty,
+  readability-container-contains,
+
+  readability-convert-member-functions-to-static,
+  readability-make-member-function-const,
+
+  readability-inconsistent-declaration-parameter-name,
+  readability-non-const-parameter,
+  readability-qualified-auto,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-redundant-function-ptr-dereference,
+  readability-redundant-inline-specifier,
+  readability-redundant-member-init,
+  readability-simplify-boolean-expr,
+  readability-static-accessed-through-instance,
+  readability-static-definition-in-anonymous-namespace,
+  readability-suspicious-call-argument,
+
+  modernize-concat-nested-namespaces,
+  modernize-raw-string-literal,
+  modernize-pass-by-value,
+  modernize-use-auto,
+  modernize-use-bool-literals,
+  modernize-use-nullptr,
+  modernize-use-noexcept,
+  modernize-use-override,
+  modernize-use-using,
+  modernize-use-equals-default,
+
+  misc-unused-using-decls,
+  misc-unused-alias-decls,
+  misc-no-recursion,
+  misc-redundant-expression
+'
+
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumPrefix
+    value: 'E'
+  - key: readability-identifier-naming.NamespaceCase
+    value: camelBack
+  - key: readability-identifier-naming.TemplateUsingCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeTemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.UnionCase
+    value: CamelCase
+  - key: readability-identifier-naming.UsingCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterPackCase
+    value: camelBack
+
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack
+  - key: readability-identifier-naming.PublicMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.PublicMemberSuffix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+  - key: readability-identifier-naming.PublicMethodPrefix
+    value: ''
+  - key: readability-identifier-naming.PublicMethodSuffix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMethodPrefix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMethodSuffix
+    value: ''
+  - key: readability-identifier-naming.PrivateMethodPrefix
+    value: ''
+  - key: readability-identifier-naming.PrivateMethodSuffix
+    value: ''
+
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'

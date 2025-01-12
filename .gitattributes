@@ -1,0 +1,6 @@
+*         text=auto
+
+*.c       text diff=c     eol=crlf
+*.cpp     text diff=cpp   eol=crlf
+*.h       text diff=c     eol=crlf
+*.hpp     text diff=cpp   eol=crlf

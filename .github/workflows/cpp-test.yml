@@ -1,0 +1,26 @@
+name: C/C++ CI
+
+on:
+  push:
+      branches: [ $default-branch ]
+  pull_request:
+      branches: [ $default-branch ]
+
+jobs:
+  build-and-test:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: ./scripts/install.sh
+      - name: Configure
+        run:
+          mkdir build
+          cmake -B build -S . -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=cmake/conan_install.cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=yes
+      - name: Build
+        run:
+          cd build
+          cmake --build . 
+      - name: Run tests
+        run:
+          ctest

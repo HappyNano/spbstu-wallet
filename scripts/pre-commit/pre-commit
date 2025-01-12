@@ -1,0 +1,13 @@
+#!/bin/bash
+
+git_root=$(git rev-parse --show-toplevel)
+
+$git_root/scripts/pre-commit/clang-format-check.sh
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+$git_root/scripts/pre-commit/end-newline.sh
+if [ $? -ne 0 ]; then
+  exit 1
+fi

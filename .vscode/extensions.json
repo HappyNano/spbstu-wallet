@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "vadimcn.vscode-lldb",
+    "llvm-vs-code-extensions.vscode-clangd",
+    "twxs.cmake",
+    "ms-vscode.cmake-tools",
+    "xaver.clang-format",
+    "EditorConfig.EditorConfig",
+    "jeff-hykin.better-cpp-syntax"
+  ]
+}
