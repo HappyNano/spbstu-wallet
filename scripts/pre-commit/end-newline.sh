@@ -15,8 +15,11 @@ errors=0
 
 for filename in $(git diff --cached --name-only $against)
 do
-    if [[ ! -z "$(git show :"$filename" | tail -c 1)" ]] then
-        echo "$filename: No Newline at end of file!"
+    if [[ ! -f $filename ]]
+    then
+        echo "[end-newline] File $filename deleted"
+    elif [[ ! -z "$(git show :"$filename" | tail -c 1)" ]] then
+        echo "[end-newline] $filename: No Newline at end of file!"
         errors=$(($errors + 1))
     fi
 done
