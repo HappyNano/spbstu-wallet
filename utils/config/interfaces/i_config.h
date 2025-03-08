@@ -6,7 +6,8 @@
 namespace util {
     class IConfig {
     public:
-        IConfig()          = default;
-        virtual ~IConfig() = 0;
+        IConfig() = default;
+
+        virtual ~IConfig() = default;
     };
 } // namespace util

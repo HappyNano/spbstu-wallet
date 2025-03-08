@@ -1,8 +1,7 @@
-LIBRARY(utils-config-interfaces)
+LIBRARY(utils-config-interfaces INTERFACE)
 
 SRCS(
   ${PROJECT_SOURCE_DIR}/utils/config/interfaces/i_config.h
-  ${PROJECT_SOURCE_DIR}/utils/config/interfaces/i_config.cpp
 )
 
 LIBS(
