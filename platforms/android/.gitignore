@@ -1,0 +1,11 @@
+.cxx
+.externalNativeBuild
+build/
+*.iml
+
+.idea
+.gradle
+local.properties
+
+gradle/
+gradlew*

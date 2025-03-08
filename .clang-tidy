@@ -109,4 +109,4 @@ CheckOptions:
     value: UPPER_CASE
 
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*'
+HeaderFilterRegex: '^(.*wallet.*\.(c|cpp|h|hpp))*$'

@@ -1,0 +1,16 @@
+{
+  "dependencies": [
+    "gtest",
+    {
+      "name": "imgui",
+      "features": [
+        "android-binding",
+        "opengl3-binding"
+      ]
+    },
+    "nlohmann-json",
+    "spdlog",
+    "stb",
+    "opencv4"
+  ]
+}

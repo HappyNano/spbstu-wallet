@@ -17,23 +17,13 @@ cp scripts/pre-commit/pre-commit .git/hooks/
 - Проверяет staged файлы на clang-format
 - Проверяет наличие новой строки в конце файла
 
-## Установка conan:
-
-```bash
-pip3 install conan
-conan profile detect --force
-```
-
 # Сборка
 
 ## CMD
 
 ```bash
 mkdir build
-cmake -B build -S . -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=cmake/conan_install.cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=yes
-cd build
-cmake --build .
-ctest
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## VSCode

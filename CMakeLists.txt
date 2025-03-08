@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(WALLET VERSION 0 LANGUAGES CXX)
+if(BUILD_ANDROID)
+  include(${CMAKE_SOURCE_DIR}/cmake/vcpkg_android.cmake)
+endif()
+set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+
+project(WALLET VERSION 0 LANGUAGES C CXX)
 
 if ("${PROJECT_BINARY_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
   message(FATAL_ERROR "In-source builds are not allowed.
@@ -10,7 +15,6 @@ if ("${PROJECT_BINARY_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(BUILD_SHARED_LIBS Off)
 set(CMAKE_CXX_EXTENSIONS Off)
 set(CMAKE_CXX_CLANG_TIDY clang-tidy --config-file=${PROJECT_SOURCE_DIR}/.clang-tidy)
 
@@ -29,8 +33,12 @@ endif()
 
 find_package(spdlog REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(imgui REQUIRED)
+find_package(Stb REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_subdirectory(utils)
 add_subdirectory(wallet)
+add_subdirectory(platforms)

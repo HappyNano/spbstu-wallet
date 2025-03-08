@@ -4,15 +4,18 @@
     "**/build": true,
     "**/.gitignore": true,
     "**/.cache": true,
+    "**/.cxx": true,
+    "**/.gradle": true,
+    "**/gradlew": true,
     "scripts": true,
     ".gitmodules": true,
     ".gitattributes": true,
     ".editorconfig": true,
     ".clang-tidy": true,
     ".clang-format": true,
-    "conanfile.txt": true,
     "CMakeUserPresets.json": true,
   },
   "cmake.buildDirectory": "${workspaceFolder}/build",
-  "cmake.parallelJobs": 11
+  "cmake.parallelJobs": 11,
+  "workbench.editor.wrapTabs": true
 }

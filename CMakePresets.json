@@ -2,17 +2,30 @@
   "version": 10,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 12,
+    "minor": 24,
     "patch": 0
   },
   "configurePresets": [
     {
       "name": "default",
       "displayName": "Default Config",
-      "description": "Default build with Conan2",
+      "description": "Default build with vcpkg",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/conan_install.cmake",
+        "BUILD_TESTING": false,
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "default_android",
+      "displayName": "Default Android Build",
+      "description": "Default Android build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "BUILD_ANDROID": true,
+        "ANDROID_ABI": "armeabi-v7a",
+        "ANDROID_PLATFORM": "android-24",
+        "BUILD_TESTING": false,
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
@@ -21,7 +34,6 @@
       "displayName": "Default Configuration for test",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/conan_install.cmake",
         "BUILD_TESTING": true,
         "CMAKE_BUILD_TYPE": "Debug"
       }

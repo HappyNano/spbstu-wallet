@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <imgui.h>
+
 #include <utils/foo/foo.h>
 
 int main() {

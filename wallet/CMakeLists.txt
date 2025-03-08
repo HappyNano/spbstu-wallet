@@ -1,4 +1,4 @@
-EXECUTABLE(wallet)
+LIBRARY(wallet)
 
 SRCS(
   main.cpp
@@ -6,6 +6,7 @@ SRCS(
 
 LIBS(
   utils-foo
+  imgui::imgui
 )
 
 END()
