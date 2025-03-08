@@ -5,15 +5,20 @@ SRCS(
 )
 
 LIBS(
+  app-glue
+  cxx-camera
   jni-camera
 
   imgui::imgui
 
-  app-glue
   android
   EGL
   GLESv3
   log
+)
+
+INCLUDEDIRS(
+  $ENV{ANDROID_NDK_HOME}/sources/android/native_app_glue
 )
 
 END()
@@ -26,9 +31,5 @@ target_compile_definitions(android-lib PRIVATE
   IMGUI_IMPL_OPENGL_ES3
 )
 
-target_include_directories(android-lib PRIVATE
-  $ENV{ANDROID_NDK_HOME}/sources/android/native_app_glue
-)
-
 add_subdirectory(app_glue)
-add_subdirectory(jni)
+add_subdirectory(camera)

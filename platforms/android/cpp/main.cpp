@@ -14,11 +14,10 @@
 #include <imgui.h>
 #include <imgui_impl_android.h>
 #include <imgui_impl_opengl3.h>
-#include <memory>
 #include <string>
 
 #include <opencv4/opencv2/opencv.hpp>
-#include <platforms/android/cpp/jni/camera/camera.h>
+#include <platforms/android/cpp/camera/camera.h>
 
 // Data
 static EGLDisplay gEglDisplay    = EGL_NO_DISPLAY;
@@ -58,7 +57,7 @@ static int32_t handleInputEvent(struct android_app * /*app*/, AInputEvent * inpu
     return ImGui_ImplAndroid_HandleInputEvent(inputEvent);
 }
 
-void android_main(struct android_app * app) {
+void android_main(struct android_app * app) { // NOLINT(readability-identifier-naming)
     // Make sure glue isn't stripped.
 
     app->onAppCmd     = handleAppCmd;
@@ -287,7 +286,7 @@ void mainLoopStep() {
         ImGui::Text("Hello from another window!");
         static bool rotateImg = true;
         ImGui::Checkbox("Rotate", &rotateImg);
-        if (auto lastTexture = jni::CameraHelper::get()->last(); lastTexture && textureId) {
+        if (auto lastTexture = cxx::CameraHelper::get()->last(); lastTexture && textureId) {
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

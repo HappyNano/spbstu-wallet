@@ -2,15 +2,12 @@
 
 #include <jni.h>
 
-#include <GLES3/gl3.h>
-#include <memory>
 #include <utils/singleton/singleton.h>
 
-#include <opencv4/opencv2/opencv.hpp>
-
+#include <memory>
 #include <mutex>
 
-namespace jni {
+namespace cxx {
 
     class Texture final {
     public:
@@ -42,8 +39,4 @@ namespace jni {
         mutable std::mutex mutex_;
     };
 
-} // namespace jni
-
-// Функция для обработки изображения из Java
-extern "C" JNIEXPORT void JNICALL
- Java_imgui_example_android_CameraHelper_onImageAvailable(JNIEnv * env, jclass, jbyteArray data, jint width, jint height); // NOLINT(readability-identifier-naming)
+} // namespace cxx
