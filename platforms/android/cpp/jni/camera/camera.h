@@ -3,6 +3,7 @@
 #include <jni.h>
 
 #include <GLES3/gl3.h>
+#include <memory>
 #include <utils/singleton/singleton.h>
 
 #include <opencv4/opencv2/opencv.hpp>
@@ -15,12 +16,16 @@ namespace jni {
     public:
         using shared = std::shared_ptr< Texture >;
 
-        Texture(jbyte * data, int width, int height);
+        Texture(jbyte * data, int width, int height, int channels);
         ~Texture();
 
-        jbyte * data;
+        std::unique_ptr< jbyte > data;
         int width;
         int height;
+        int channels;
+
+        auto rotate() -> void;
+        auto isVertical() const -> bool;
     };
 
     class CameraHelper final: public util::Singleton< CameraHelper > {
@@ -28,7 +33,7 @@ namespace jni {
         CameraHelper()           = default;
         ~CameraHelper() override = default;
 
-        auto addTexture(jbyte * data, int width, int height) -> void;
+        auto newTexture(jbyte * data, int width, int height, int channels) -> void;
         auto last() const -> Texture::shared;
 
     private:

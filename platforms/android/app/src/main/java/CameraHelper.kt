@@ -3,18 +3,13 @@ package imgui.example.android
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.ImageFormat
-import android.graphics.YuvImage
-import android.media.Image
-import android.os.Build
 import android.util.Log
 import android.util.Size
 import androidx.camera.core.*
+import androidx.camera.core.resolutionselector.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 class CameraHelper(private val context: Context) {
@@ -47,8 +42,12 @@ class CameraHelper(private val context: Context) {
         val cameraProvider = cameraProvider ?: return
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
+        val resolutionSelector = ResolutionSelector.Builder()
+            .setResolutionStrategy(ResolutionStrategy(Size(640, 480), ResolutionStrategy.FALLBACK_RULE_NONE))
+            .build()
+
         val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetResolution(Size(640, 480))
+            .setResolutionSelector(resolutionSelector)
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()

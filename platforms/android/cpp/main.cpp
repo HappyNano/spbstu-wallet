@@ -272,70 +272,40 @@ void mainLoopStep() {
         ImGui::End();
     }
 
-    GLuint texture = 0;
+    static GLuint textureId = 0;
+    if (!textureId) {
+        // Генерация текстуры
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        if (!glIsTexture(textureId)) {
+            __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "Failed to generate OpenGL texture!");
+        }
+    }
 
     if (showCamera) {
-        ImGui::Begin("Camera Window", &showCamera); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        // bool ret = loadTextureFromMemory("../../MyImage01.jpg", &myImageTexture, &myImageWidth, &myImageHeight);
-        // IM_ASSERT(ret);
+        ImGui::Begin("Camera Window", &showCamera);
         ImGui::Text("Hello from another window!");
-        if (auto lastTexture = jni::CameraHelper::get()->last()) {
+        static bool rotateImg = true;
+        ImGui::Checkbox("Rotate", &rotateImg);
+        if (auto lastTexture = jni::CameraHelper::get()->last(); lastTexture && textureId) {
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glBindTexture(GL_TEXTURE_2D, textureId);
 
-            GLint currentProgram;
-            glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-            if (currentProgram == 0) {
-                __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "No OpenGL context!");
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            if (rotateImg && !lastTexture->isVertical()) {
+                lastTexture->rotate();
             }
-            if (eglGetCurrentContext() == EGL_NO_CONTEXT) {
-                __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "Here");
-                if (!eglMakeCurrent(gEglDisplay, gEglSurface, gEglSurface, gEglContext)) {
-                    __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "eglMakeCurrent failed!");
-                } else {
-                    __android_log_print(ANDROID_LOG_INFO, "MainCppCameraHelper", "eglMakeCurrent success!");
-                }
-            }
-            glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-            if (currentProgram == 0) {
-                __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "No OpenGL context!");
-            }
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastTexture->width, lastTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, lastTexture->data.get());
 
-            GLint boundFramebuffer;
-            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &boundFramebuffer);
-            __android_log_print(ANDROID_LOG_INFO, "MainCppCameraHelper", "Current FBO: %d", boundFramebuffer);
-
-            EGLDisplay display = eglGetCurrentDisplay();
-            EGLContext context = eglGetCurrentContext();
-            if (display == EGL_NO_DISPLAY || context == EGL_NO_CONTEXT) {
-                __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "No EGL display or context!");
-            }
-
-            // Генерация текстуры
-            glGenTextures(1, &texture);
-            glBindTexture(GL_TEXTURE_2D, texture);
-            if (!glIsTexture(texture)) {
-                __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "Failed to generate OpenGL texture!");
-            } else {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                // cv::Mat yuvImage{ lastTexture->height + lastTexture->height / 2, lastTexture->width, CV_8UC1, (uchar*)lastTexture->data };
-                // cv::Mat rgbImage(lastTexture->height, lastTexture->width, CV_8UC3);
-                // cv::cvtColor(yuvImage, rgbImage, cv::COLOR_YUV2BGR_NV21);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastTexture->width, lastTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, lastTexture->data);
-
-                // Преобразование в формат ImGui
-                // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, lastTexture->width, lastTexture->height, 0, GL_RGB, GL_UNSIGNED_BYTE, lastTexture->rgbImage.data);
-                __android_log_print(ANDROID_LOG_INFO, "MainCppCameraHelper", "New in main data is %u width %i height %i addr %llu", texture, lastTexture->width, lastTexture->height, (unsigned long long)lastTexture.get());
-                ImGui::Image(texture, ImVec2(lastTexture->width, lastTexture->height));
-            }
-            ImGui::Text("pointer = %x", texture);
+            ImGui::Image(textureId, ImVec2(lastTexture->width, lastTexture->height));
+            ImGui::Text("pointer = %x", textureId);
             ImGui::Text("size = %d x %d", lastTexture->width, lastTexture->height);
         }
-        // ImGui::Image((ImTextureID)(intptr_t)myImageTexture, ImVec2(myImageWidth, myImageHeight));
         if (ImGui::Button("Close Me")) {
             showCamera = false;
         }
@@ -354,10 +324,10 @@ void mainLoopStep() {
     }
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     eglSwapBuffers(gEglDisplay, gEglSurface);
-    if (texture) {
-        __android_log_print(ANDROID_LOG_INFO, "MainCppCameraHelper", "Deleted %u", texture);
-        glDeleteTextures(1, &texture);
-    }
+    // if (texture) {
+    //     __android_log_print(ANDROID_LOG_INFO, "MainCppCameraHelper", "Deleted %u", texture);
+    //     glDeleteTextures(1, &texture);
+    // }
 }
 
 void shutdown() {
