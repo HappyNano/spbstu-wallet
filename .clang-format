@@ -4,7 +4,7 @@ AccessModifierOffset: -4
 AlignAfterOpenBracket: AlwaysBreak
 AlignArrayOfStructures: Right
 AlignConsecutiveAssignments:
-  Enabled: true
+  Enabled: false
 AlignConsecutiveMacros:
   Enabled: true
   AlignCompound: true

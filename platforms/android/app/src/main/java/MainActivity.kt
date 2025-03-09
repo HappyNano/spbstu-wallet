@@ -8,6 +8,7 @@ import android.content.Context
 import android.view.inputmethod.InputMethodManager
 import android.view.KeyEvent
 import android.util.Log
+import android.widget.Toast
 import java.util.concurrent.LinkedBlockingQueue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -73,6 +74,20 @@ class MainActivity : NativeActivity(), LifecycleOwner {
 
     fun pollUnicodeChar(): Int {
         return unicodeCharacterQueue.poll() ?: 0
+    }
+
+    fun closeCamera() {
+        runOnUiThread {
+            cameraHelper.closeCamera();
+            // Toast.makeText(this, "C++ вызвал: $message", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun openCamera() {
+        runOnUiThread {
+            cameraHelper.openCamera();
+            // Toast.makeText(this, "C++ вызвал: $message", Toast.LENGTH_SHORT).show()
+        }
     }
 
     companion object {

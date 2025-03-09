@@ -47,7 +47,7 @@ namespace util {
         virtual ~IDatabase();
 
         virtual void createTable(std::string_view tableName, std::map< std::string, ColParams > cols) = 0;
-        virtual void dropTable(std::string_view tableName)                                            = 0;
+        virtual void dropTable(std::string_view tableName) = 0;
 
         virtual void insertRow() = 0;
         virtual void upsertRow() = 0;

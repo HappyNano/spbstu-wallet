@@ -8,6 +8,7 @@ LIBS(
   app-glue
   cxx-camera
   jni-camera
+  cxx-main_activity
 
   imgui::imgui
 
@@ -33,3 +34,5 @@ target_compile_definitions(android-lib PRIVATE
 
 add_subdirectory(app_glue)
 add_subdirectory(camera)
+add_subdirectory(logger)
+add_subdirectory(main_activity)

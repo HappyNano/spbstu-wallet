@@ -27,7 +27,7 @@ namespace cxx {
 
     class CameraHelper final: public util::Singleton< CameraHelper > {
     public:
-        CameraHelper()           = default;
+        CameraHelper() = default;
         ~CameraHelper() override = default;
 
         auto newTexture(jbyte * data, int width, int height, int channels) -> void;

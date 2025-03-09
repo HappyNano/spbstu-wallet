@@ -10,6 +10,7 @@ LIBS(
   imgui::imgui
   android
 
+  cxx-logger
   utils-singleton
 )
 
