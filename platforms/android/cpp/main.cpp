@@ -9,7 +9,6 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <android/asset_manager.h>
-#include <android/log.h>
 #include <android_native_app_glue.h>
 #include <imgui.h>
 #include <imgui_impl_android.h>
@@ -19,6 +18,8 @@
 #include <platforms/android/cpp/camera/camera.h>
 #include <platforms/android/cpp/logger/logger.h>
 #include <platforms/android/cpp/main_activity/main_activity.h>
+
+static constexpr auto BACKGROUD_COLOR = ImVec4(217 / 255.f, 219 / 255.f, 218 / 255.f, 1.0f);
 
 // Android native glue parts
 static void handleAppCmd(struct android_app * app, int32_t appCmd) {
@@ -43,18 +44,19 @@ static int32_t handleInputEvent(struct android_app * /*app*/, AInputEvent * inpu
 
 static void drawLoop() {
     // State
+    static bool fff = true;
     static bool showDemoWindow = true;
     static bool showAnotherWindow = false;
-    static bool showCamera = true;
 
     static ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (showDemoWindow) {
+    if (false && showDemoWindow) { // NOLINT
         ImGui::ShowDemoWindow(&showDemoWindow);
     }
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+    if (false) // NOLINT
     {
         static float f = 0.0f;
         static int counter = 0;
@@ -64,7 +66,7 @@ static void drawLoop() {
         ImGui::Text("This is some useful text.");        // Display some text (you can use a format strings too)
         ImGui::Checkbox("Demo Window", &showDemoWindow); // Edit bools storing our window open/close state
         ImGui::Checkbox("Another Window", &showAnotherWindow);
-        ImGui::Checkbox("Camera", &showCamera);
+        // ImGui::Checkbox("Camera", &showCamera);
 
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
         ImGui::ColorEdit3("clear color", (float *)&clearColor); // Edit 3 floats representing a color
@@ -81,7 +83,7 @@ static void drawLoop() {
     }
 
     // 3. Show another simple window.
-    if (showAnotherWindow)
+    if (false && showAnotherWindow) // NOLINT
     {
         ImGui::Begin("Another Window", &showAnotherWindow); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         ImGui::Text("Hello from another window!");
@@ -97,47 +99,62 @@ static void drawLoop() {
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
         if (!glIsTexture(textureId)) {
-            __android_log_print(ANDROID_LOG_ERROR, "MainCppCameraHelper", "Failed to generate OpenGL texture!");
+            cxx::AndroidLogger::logError("MainCppCameraHelper: %s", "Failed to generate OpenGL texture!");
         }
     }
+    ImGuiViewport * viewport = ImGui::GetMainViewport();
+    int statusBarHeight = cxx::MainActivity::get()->getStatusBarHeight();
+    ImGui::SetNextWindowPos(ImVec2(0, statusBarHeight), ImGuiCond_Always);
+    // ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
 
-    if (showCamera) {
-        ImGui::Begin("Camera Window", &showCamera);
-        ImGui::Text("Hello from another window!");
-        static bool rotateImg = true;
-        ImGui::Checkbox("Rotate", &rotateImg);
-        if (auto lastTexture = cxx::CameraHelper::get()->last(); lastTexture && textureId) {
-            glEnable(GL_TEXTURE_2D);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glBindTexture(GL_TEXTURE_2D, textureId);
+    ImGui::StyleColorsLight(&ImGui::GetStyle());
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            if (rotateImg && !lastTexture->isVertical()) {
-                lastTexture->rotate();
-            }
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastTexture->width, lastTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, lastTexture->data.get());
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, BACKGROUD_COLOR);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-            ImGui::Image(textureId, ImVec2(lastTexture->width, lastTexture->height));
-            ImGui::Text("pointer = %x", textureId);
-            ImGui::Text("size = %d x %d", lastTexture->width, lastTexture->height);
+    ImGui::Begin("Camera Window", &fff, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
+
+    // ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+    // ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor();
+
+    ImGui::Text("Hello from another window!");
+    static bool rotateImg = true;
+    ImGui::Checkbox("Rotate", &rotateImg);
+    if (auto lastTexture = cxx::CameraHelper::get()->last(); lastTexture && textureId) {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        if (rotateImg && !lastTexture->isVertical()) {
+            lastTexture->rotate();
         }
-        if (ImGui::Button("Turn off")) {
-            cxx::AndroidLogger::logInfo("mainLoopStep: %s", "Close Camera");
-            cxx::MainActivity::get()->closeCamera();
-        }
-        if (ImGui::Button("Turn on")) {
-            cxx::AndroidLogger::logInfo("mainLoopStep: %s", "Open Camera");
-            cxx::MainActivity::get()->openCamera();
-        }
-        if (ImGui::Button("Close Me")) {
-            showCamera = false;
-        }
-        ImGui::End();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastTexture->width, lastTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, lastTexture->data.get());
+
+        ImGui::Image(textureId, ImVec2(lastTexture->width, lastTexture->height));
+        ImGui::Text("pointer = %x", textureId);
+        ImGui::Text("size = %d x %d", lastTexture->width, lastTexture->height);
     }
+    // ImGui::PushItemWidth(-1.0f);
+    if (ImGui::Button("Turn off", ImVec2(-1.0f, 0.0f))) {
+        cxx::AndroidLogger::logInfo("mainLoopStep: %s", "Close Camera");
+        cxx::MainActivity::get()->closeCamera();
+    }
+    if (ImGui::Button("Turn on", ImVec2(-1.0f, 0.0f))) {
+        cxx::AndroidLogger::logInfo("mainLoopStep: %s", "Open Camera");
+        cxx::MainActivity::get()->openCamera();
+    }
+    // ImGui::PopItemWidth();
+    ImGui::End();
 }
 
 void android_main(struct android_app * app) { // NOLINT(readability-identifier-naming)
@@ -145,6 +162,8 @@ void android_main(struct android_app * app) { // NOLINT(readability-identifier-n
 
     app->onAppCmd = handleAppCmd;
     app->onInputEvent = handleInputEvent;
+
+    cxx::MainActivity::get()->setBackgroudColor(BACKGROUD_COLOR);
 
     while (true)
     {

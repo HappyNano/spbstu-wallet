@@ -60,6 +60,11 @@ class MainActivity : NativeActivity(), LifecycleOwner {
         inputMethodManager.hideSoftInputFromWindow(this.window.decorView.windowToken, 0)
     }
 
+    fun getStatusBarHeight(): Int {
+        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
+    }
+
     // Queue for the Unicode characters to be polled from native code (via pollUnicodeChar())
     private var unicodeCharacterQueue: LinkedBlockingQueue<Int> = LinkedBlockingQueue()
 

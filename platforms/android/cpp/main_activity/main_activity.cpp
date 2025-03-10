@@ -157,17 +157,21 @@ void cxx::MainActivity::shutdown() {
     initialized_ = false;
 }
 
-bool cxx::MainActivity::isInitialized() const noexcept {
+auto cxx::MainActivity::isInitialized() const noexcept -> bool {
     return initialized_;
 }
-const EGLDisplay & cxx::MainActivity::getEGLDisplay() {
+auto cxx::MainActivity::getEGLDisplay() -> const EGLDisplay & {
     return eglDisplay_;
 }
-const EGLSurface & cxx::MainActivity::getEGLSurface() {
+auto cxx::MainActivity::getEGLSurface() -> const EGLSurface & {
     return eglSurface_;
 }
-const EGLContext & cxx::MainActivity::getEGLContext() {
+auto cxx::MainActivity::getEGLContext() -> const EGLContext & {
     return eglContext_;
+}
+
+void cxx::MainActivity::setBackgroudColor(ImVec4 color) {
+    backgroudColor_ = color;
 }
 
 void cxx::MainActivity::mainLoopStep(const std::function< void(void) > & drawFunction) {
@@ -175,8 +179,6 @@ void cxx::MainActivity::mainLoopStep(const std::function< void(void) > & drawFun
     if (getEGLDisplay() == EGL_NO_DISPLAY) {
         return;
     }
-
-    static ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     pollUnicodeChars();
 
@@ -198,8 +200,8 @@ void cxx::MainActivity::mainLoopStep(const std::function< void(void) > & drawFun
     // Rendering
     ImGui::Render();
     glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    glClearColor(clearColor.x * clearColor.w, clearColor.y * clearColor.w, clearColor.z * clearColor.w, clearColor.w);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(backgroudColor_.x, backgroudColor_.y, backgroudColor_.z, backgroudColor_.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     eglSwapBuffers(getEGLDisplay(), getEGLSurface());
 }
@@ -222,6 +224,13 @@ auto cxx::MainActivity::hideSoftKeyboardInput() noexcept -> int {
 
 auto cxx::MainActivity::pollUnicodeChars() noexcept -> int {
     return safeCallMethod(this, &MainActivity::pollUnicodeCharsUnsafe, "pollUnicodeChars: %s");
+}
+
+auto cxx::MainActivity::getStatusBarHeight() noexcept -> int {
+    if (!statusBarHeight_.has_value()) {
+        getStatusBarHeightUnsafe();
+    }
+    return statusBarHeight_.value_or(0);
 }
 
 void cxx::MainActivity::closeCameraUnsafe() {
@@ -257,6 +266,11 @@ void cxx::MainActivity::pollUnicodeCharsUnsafe() {
     while ((unicodeCharacter = executor.call< jint >()) != 0) {
         io.AddInputCharacter(unicodeCharacter);
     }
+}
+
+void cxx::MainActivity::getStatusBarHeightUnsafe() {
+    auto executor = createExecutorUnsafe("getStatusBarHeight", "()I");
+    statusBarHeight_.emplace(executor.call< jint >());
 }
 
 auto cxx::MainActivity::createExecutorUnsafe(std::string_view name, std::string_view sign) -> JNIExecutor {

@@ -12,7 +12,7 @@
 
         <activity
             android:name="imgui.example.android.MainActivity"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            android:theme="@style/AppTheme"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true">
             <meta-data android:name="android.app.lib_name"
