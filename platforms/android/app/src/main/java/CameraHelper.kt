@@ -53,7 +53,7 @@ class CameraHelper(private val context: Context) {
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
         val resolutionSelector = ResolutionSelector.Builder()
-            .setResolutionStrategy(ResolutionStrategy(Size(640, 480), ResolutionStrategy.FALLBACK_RULE_NONE))
+            .setResolutionStrategy(ResolutionStrategy(Size(960, 720), ResolutionStrategy.FALLBACK_RULE_NONE))
             .build()
 
         imageAnalysis = ImageAnalysis.Builder()

@@ -15,6 +15,7 @@
 #include <imgui_impl_android.h>
 #include <imgui_impl_opengl3.h>
 
+#include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/objdetect.hpp>
 #include <opencv4/opencv2/opencv.hpp>
@@ -22,15 +23,17 @@
 #include <platforms/android/cpp/logger/logger.h>
 #include <platforms/android/cpp/main_activity/main_activity.h>
 
+#include <future>
 #include <mutex>
-#include <thread>
+#include <optional>
 
 static std::mutex mutex;
 static std::atomic_bool busy = false;
 static bool lastBool = false;
 static cv::Mat lastCorners;
 static std::string lastResult = "";
-static constexpr auto BACKGROUD_COLOR = ImVec4(217 / 255.f, 219 / 255.f, 218 / 255.f, 1.0f);
+constexpr auto BACKGROUD_COLOR = ImVec4(217 / 255.f, 219 / 255.f, 218 / 255.f, 1.0f);
+constexpr int cropSize = 256;
 
 // Android native glue parts
 static void handleAppCmd(struct android_app * app, int32_t appCmd) {
@@ -150,7 +153,6 @@ static void drawLoop() {
                 cv::UMat bgMat;
                 {
                     cv::Mat rgbMat(texture->height, texture->width, CV_MAKETYPE(CV_8U, texture->channels), texture->data.get());
-                    const int cropSize = 256;
                     const int offsetW = (rgbMat.cols - cropSize) / 2;
                     const int offsetH = (rgbMat.rows - cropSize) / 2;
                     const cv::Rect roi(offsetW, offsetH, cropSize, cropSize);
@@ -189,14 +191,24 @@ static void drawLoop() {
 
         const int cropSize = 256;
         static std::weak_ptr< cxx::Texture > lastWeak;
+
+        static int offsetW;
+        static int offsetH;
+
         if (lastWeak.expired()) {
             lastWeak = lastTexture;
             cv::Mat bgMat;
             cv::Mat rgbMat(lastTexture->height, lastTexture->width, CV_MAKETYPE(CV_8U, lastTexture->channels), lastTexture->data.get());
-            const int offsetW = (rgbMat.cols - cropSize) / 2;
-            const int offsetH = (rgbMat.rows - cropSize) / 2;
+            offsetW = (rgbMat.cols - cropSize) / 2;
+            offsetH = (rgbMat.rows - cropSize) / 2;
             const cv::Rect roi(offsetW, offsetH, cropSize, cropSize);
-            cv::cvtColor(rgbMat(roi), bgMat, cv::COLOR_RGBA2GRAY);
+            cv::cvtColor(rgbMat, bgMat, cv::COLOR_RGBA2GRAY);
+
+            // cv::Mat tmp = rgbMat(roi).clone();
+            // rgbMat /= 0.7;
+            // tmp.copyTo(rgbMat(roi));
+
+            // rgbMat.copyTo(rgbMat);
 
             if (std::lock_guard< std::mutex > lock(mutex); !lastCorners.empty()) {
                 std::vector< cv::Point > qrPoints;
@@ -205,7 +217,7 @@ static void drawLoop() {
                     qrPoints.push_back(cv::Point(offsetW + lastCorners.at< float >(0, i * 2), offsetH + lastCorners.at< float >(0, i * 2 + 1)));
                 }
 
-                cv::polylines(rgbMat, qrPoints, true, cv::Scalar(0, 0, 255), 3); // Красный цвет, толщина 3 пикселя
+                cv::polylines(bgMat, qrPoints, true, cv::Scalar(0, 0, 255), 3); // Красный цвет, толщина 3 пикселя
             }
 
             // memcpy(data.get(), rotatedMat.data, width * height * channels);
@@ -215,17 +227,20 @@ static void drawLoop() {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastTexture->width, lastTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbMat.data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, lastTexture->width, lastTexture->height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, bgMat.data);
 
             glBindTexture(GL_TEXTURE_2D, textureId2);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, cropSize, cropSize, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, bgMat.data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cropSize, cropSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbMat(roi).clone().data);
         }
 
+        ImVec2 p = ImGui::GetCursorScreenPos();
         ImGui::Image(textureId, ImVec2(lastTexture->width, lastTexture->height));
+        ImGui::GetWindowDrawList()->AddImage(textureId2, ImVec2(p.x + offsetW, p.y + offsetH), ImVec2(p.x + offsetW + cropSize, p.y + offsetH + cropSize), ImVec2(0, 0), ImVec2(1, 1));
+        ImGui::GetWindowDrawList()->AddRect(ImVec2(p.x + offsetW, p.y + offsetH), ImVec2(p.x + offsetW + cropSize, p.y + offsetH + cropSize), ImColor(215, 215, 215), 0, 2.0f);
         ImGui::Image(textureId2, ImVec2(cropSize, cropSize));
         ImGui::Text("pointer = %x", textureId);
         ImGui::Text("size = %d x %d", lastTexture->width, lastTexture->height);

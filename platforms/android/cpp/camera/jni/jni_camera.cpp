@@ -18,5 +18,7 @@ extern "C" JNIEXPORT void JNICALL
     memcpy(newData, yuvData, sizeof(jbyte) * width * height * CHANNELS);
     env->ReleaseByteArrayElements(data, yuvData, JNI_ABORT);
 
-    cxx::CameraHelper::get()->newTexture(newData, width, height, CHANNELS);
+    if (width > 0 && height > 0) {
+        cxx::CameraHelper::get()->newTexture(newData, width, height, CHANNELS);
+    }
 }
