@@ -1,6 +1,7 @@
 #include "camera.h"
 
 #include <android/log.h>
+#include <memory>
 #include <opencv4/opencv2/opencv.hpp>
 
 cxx::Texture::Texture(jbyte * data, int width, int height, int channels)
@@ -10,7 +11,49 @@ cxx::Texture::Texture(jbyte * data, int width, int height, int channels)
   , channels{ channels } {
 }
 
+cxx::Texture::Texture(const Texture & obj)
+  : data{ std::make_unique< jbyte >(obj.width * obj.height * obj.channels) }
+  , width{ obj.width }
+  , height{ obj.height }
+  , channels{ obj.channels } {
+    memcpy(data.get(), obj.data.get(), width * height * channels);
+}
+
+cxx::Texture::Texture(Texture && obj)
+  : data{ std::move(obj.data) }
+  , width{ obj.width }
+  , height{ obj.height }
+  , channels{ obj.channels } {
+    obj.data.release();
+    obj.width = 0;
+    obj.height = 0;
+    obj.channels = 0;
+}
+
 cxx::Texture::~Texture() = default;
+
+auto cxx::Texture::operator=(const Texture & obj) -> Texture & {
+    if (this != std::addressof(obj)) {
+        Texture tmp(obj);
+        swap(tmp);
+    }
+    return *this;
+}
+
+auto cxx::Texture::operator=(Texture && obj) -> Texture & {
+    if (this != std::addressof(obj)) {
+        Texture tmp(std::move(obj));
+        swap(tmp);
+    }
+    return *this;
+}
+
+void cxx::Texture::swap(Texture & obj) noexcept {
+    data.swap(obj.data);
+    std::swap(width, obj.width);
+    std::swap(height, obj.height);
+    std::swap(channels, obj.channels);
+}
 
 auto cxx::Texture::rotate() -> void {
     cv::Mat rgbaMat(height, width, CV_MAKETYPE(CV_8U, channels), data.get());

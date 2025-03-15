@@ -10,15 +10,26 @@
 #include <GLES3/gl3.h>
 #include <android/asset_manager.h>
 #include <android_native_app_glue.h>
+#include <atomic>
 #include <imgui.h>
 #include <imgui_impl_android.h>
 #include <imgui_impl_opengl3.h>
 
+#include <opencv2/core/mat.hpp>
+#include <opencv2/objdetect.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <platforms/android/cpp/camera/camera.h>
 #include <platforms/android/cpp/logger/logger.h>
 #include <platforms/android/cpp/main_activity/main_activity.h>
 
+#include <mutex>
+#include <thread>
+
+static std::mutex mutex;
+static std::atomic_bool busy = false;
+static bool lastBool = false;
+static cv::Mat lastCorners;
+static std::string lastResult = "";
 static constexpr auto BACKGROUD_COLOR = ImVec4(217 / 255.f, 219 / 255.f, 218 / 255.f, 1.0f);
 
 // Android native glue parts
@@ -94,6 +105,7 @@ static void drawLoop() {
     }
 
     static GLuint textureId = 0;
+    static GLuint textureId2 = 0;
     if (!textureId) {
         // Генерация текстуры
         glGenTextures(1, &textureId);
@@ -129,18 +141,92 @@ static void drawLoop() {
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glBindTexture(GL_TEXTURE_2D, textureId);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         if (rotateImg && !lastTexture->isVertical()) {
             lastTexture->rotate();
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastTexture->width, lastTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, lastTexture->data.get());
+        if (!busy) {
+            busy = true;
+            auto t = std::thread([texture = lastTexture]() mutable {
+                cv::UMat bgMat;
+                {
+                    cv::Mat rgbMat(texture->height, texture->width, CV_MAKETYPE(CV_8U, texture->channels), texture->data.get());
+                    const int cropSize = 256;
+                    const int offsetW = (rgbMat.cols - cropSize) / 2;
+                    const int offsetH = (rgbMat.rows - cropSize) / 2;
+                    const cv::Rect roi(offsetW, offsetH, cropSize, cropSize);
+                    cv::cvtColor(rgbMat(roi), bgMat, cv::COLOR_RGBA2GRAY);
+                    texture.reset();
+                }
+                static auto qrDet = cv::QRCodeDetectorAruco();
+
+                cv::Mat corners;
+                bool detectResult = qrDet.detect(bgMat, corners);
+                {
+                    std::lock_guard< std::mutex > lock(mutex);
+                    lastBool = detectResult;
+                    lastCorners = corners;
+                }
+
+                if (detectResult) {
+                    cv::Mat points, rectImage;
+                    std::string decodeResult = qrDet.detectAndDecode(bgMat, points, rectImage);
+                    {
+                        std::lock_guard< std::mutex > lock(mutex);
+                        lastResult = std::move(decodeResult);
+                    }
+                }
+
+                busy = false;
+            });
+            t.detach();
+        }
+
+        {
+            std::lock_guard< std::mutex > lock(mutex);
+            ImGui::Text("detectionResult = %i", lastBool);
+            ImGui::Text("Result = \'%s\'", lastResult.c_str());
+        }
+
+        const int cropSize = 256;
+        static std::weak_ptr< cxx::Texture > lastWeak;
+        if (lastWeak.expired()) {
+            lastWeak = lastTexture;
+            cv::Mat bgMat;
+            cv::Mat rgbMat(lastTexture->height, lastTexture->width, CV_MAKETYPE(CV_8U, lastTexture->channels), lastTexture->data.get());
+            const int offsetW = (rgbMat.cols - cropSize) / 2;
+            const int offsetH = (rgbMat.rows - cropSize) / 2;
+            const cv::Rect roi(offsetW, offsetH, cropSize, cropSize);
+            cv::cvtColor(rgbMat(roi), bgMat, cv::COLOR_RGBA2GRAY);
+
+            if (std::lock_guard< std::mutex > lock(mutex); !lastCorners.empty()) {
+                std::vector< cv::Point > qrPoints;
+                qrPoints.reserve(4);
+                for (int i = 0; i < 4; i++) {
+                    qrPoints.push_back(cv::Point(offsetW + lastCorners.at< float >(0, i * 2), offsetH + lastCorners.at< float >(0, i * 2 + 1)));
+                }
+
+                cv::polylines(rgbMat, qrPoints, true, cv::Scalar(0, 0, 255), 3); // Красный цвет, толщина 3 пикселя
+            }
+
+            // memcpy(data.get(), rotatedMat.data, width * height * channels);
+
+            glBindTexture(GL_TEXTURE_2D, textureId);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastTexture->width, lastTexture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbMat.data);
+
+            glBindTexture(GL_TEXTURE_2D, textureId2);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, cropSize, cropSize, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, bgMat.data);
+        }
 
         ImGui::Image(textureId, ImVec2(lastTexture->width, lastTexture->height));
+        ImGui::Image(textureId2, ImVec2(cropSize, cropSize));
         ImGui::Text("pointer = %x", textureId);
         ImGui::Text("size = %d x %d", lastTexture->width, lastTexture->height);
     }

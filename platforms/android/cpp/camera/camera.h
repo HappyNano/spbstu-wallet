@@ -14,7 +14,14 @@ namespace cxx {
         using shared = std::shared_ptr< Texture >;
 
         Texture(jbyte * data, int width, int height, int channels);
+        Texture(const Texture & obj);
+        Texture(Texture && obj);
         ~Texture();
+
+        auto operator=(const Texture & obj) -> Texture &;
+        auto operator=(Texture && obj) -> Texture &;
+
+        void swap(Texture & obj) noexcept;
 
         std::unique_ptr< jbyte > data;
         int width;
