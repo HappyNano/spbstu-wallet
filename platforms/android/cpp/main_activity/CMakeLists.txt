@@ -1,8 +1,8 @@
 LIBRARY(cxx-main_activity)
 
 SRCS(
-  ${PROJECT_SOURCE_DIR}/platforms/android/cpp/main_activity/main_activity.h
-  ${PROJECT_SOURCE_DIR}/platforms/android/cpp/main_activity/main_activity.cpp
+  ${PROJECT_SOURCE_DIR}/platforms/android/cpp/main_activity/android_main_activity.h
+  ${PROJECT_SOURCE_DIR}/platforms/android/cpp/main_activity/android_main_activity.cpp
   ${PROJECT_SOURCE_DIR}/platforms/android/cpp/main_activity/jni_executor.h
   ${PROJECT_SOURCE_DIR}/platforms/android/cpp/main_activity/jni_executor.cpp
 )
@@ -10,9 +10,9 @@ SRCS(
 LIBS(
   ${OpenCV_LIBS}
   imgui::imgui
+  spdlog::spdlog
   android
 
-  cxx-logger
   utils-singleton
 )
 

@@ -19,6 +19,9 @@ sudo apt install google-android-platform-34-installer -y
 sudo apt install google-android-build-tools-34.0.0-installer -y
 sudo apt install google-android-cmdline-tools-13.0-installer -y
 sudo apt install google-android-ndk-r25-installer -y
+
+# Installing dependencies for SDL3 build
+sudo apt install libx11-dev libxft-dev libxext-dev libxi-dev libxtst-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev bison libxrandr-dev -y
 ```
 
 Gradle неоходим версии 8+

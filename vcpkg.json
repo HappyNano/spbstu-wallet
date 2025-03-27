@@ -4,7 +4,6 @@
     {
       "name": "imgui",
       "features": [
-        "android-binding",
         "opengl3-binding"
       ]
     },
@@ -12,5 +11,29 @@
     "spdlog",
     "stb",
     "opencv4"
-  ]
+  ],
+  "features": {
+    "android": {
+      "description": "Dependencies needed for the android platform building",
+      "dependencies": [
+        {
+          "name": "imgui",
+          "features": [
+            "android-binding"
+          ]
+        }
+      ]
+    },
+    "other-platform": {
+      "description": "Dependencies needed for the (Linux|Windows|Apple) platforms building",
+      "dependencies": [
+        {
+          "name": "imgui",
+          "features": [
+            "sdl3-binding"
+          ]
+        }
+      ]
+    }
+  }
 }

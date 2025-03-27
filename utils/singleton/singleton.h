@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <type_traits>
 
 namespace util {
 
@@ -9,9 +10,15 @@ namespace util {
     public:
         using shared = std::shared_ptr< Class >;
 
+        static void set(shared newPtr) {
+            instance_.swap(newPtr);
+        }
+
         static shared get() {
-            if (!instance_) {
-                instance_ = std::make_shared< Class >();
+            if constexpr (std::is_default_constructible_v< Class >) {
+                if (!instance_) {
+                    instance_ = std::make_shared< Class >();
+                }
             }
             return instance_;
         }

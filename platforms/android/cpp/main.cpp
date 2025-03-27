@@ -14,14 +14,14 @@
 #include <imgui.h>
 #include <imgui_impl_android.h>
 #include <imgui_impl_opengl3.h>
+#include <spdlog/spdlog.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/objdetect.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <platforms/android/cpp/camera/camera.h>
-#include <platforms/android/cpp/logger/logger.h>
-#include <platforms/android/cpp/main_activity/main_activity.h>
+#include <platforms/android/cpp/main_activity/android_main_activity.h>
 
 #include <future>
 #include <mutex>
@@ -34,27 +34,6 @@ static cv::Mat lastCorners;
 static std::string lastResult = "";
 constexpr auto BACKGROUD_COLOR = ImVec4(217 / 255.f, 219 / 255.f, 218 / 255.f, 1.0f);
 constexpr int cropSize = 256;
-
-// Android native glue parts
-static void handleAppCmd(struct android_app * app, int32_t appCmd) {
-    switch (appCmd)
-    {
-    case APP_CMD_SAVE_STATE:
-        break;
-    case APP_CMD_INIT_WINDOW:
-        cxx::MainActivity::get()->init(app);
-        break;
-    case APP_CMD_TERM_WINDOW:
-        cxx::MainActivity::get()->shutdown();
-        break;
-    case APP_CMD_GAINED_FOCUS:
-    case APP_CMD_LOST_FOCUS:
-        break;
-    }
-}
-static int32_t handleInputEvent(struct android_app * /*app*/, AInputEvent * inputEvent) {
-    return ImGui_ImplAndroid_HandleInputEvent(inputEvent);
-}
 
 static void drawLoop() {
     // State
@@ -114,11 +93,11 @@ static void drawLoop() {
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
         if (!glIsTexture(textureId)) {
-            cxx::AndroidLogger::logError("MainCppCameraHelper: %s", "Failed to generate OpenGL texture!");
+            SPDLOG_ERROR("MainCppCameraHelper: %s", "Failed to generate OpenGL texture!");
         }
     }
     ImGuiViewport * viewport = ImGui::GetMainViewport();
-    int statusBarHeight = cxx::MainActivity::get()->getStatusBarHeight();
+    int statusBarHeight = cxx::AndroidMainActivity::get()->getStatusBarHeight();
     ImGui::SetNextWindowPos(ImVec2(0, statusBarHeight), ImGuiCond_Always);
     // ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -247,52 +226,24 @@ static void drawLoop() {
     }
     // ImGui::PushItemWidth(-1.0f);
     if (ImGui::Button("Turn off", ImVec2(-1.0f, 0.0f))) {
-        cxx::AndroidLogger::logInfo("mainLoopStep: %s", "Close Camera");
-        cxx::MainActivity::get()->closeCamera();
+        SPDLOG_INFO("mainLoopStep: %s", "Close Camera");
+        cxx::AndroidMainActivity::get()->closeCamera();
     }
     if (ImGui::Button("Turn on", ImVec2(-1.0f, 0.0f))) {
-        cxx::AndroidLogger::logInfo("mainLoopStep: %s", "Open Camera");
-        cxx::MainActivity::get()->openCamera();
+        SPDLOG_INFO("mainLoopStep: %s", "Open Camera");
+        cxx::AndroidMainActivity::get()->openCamera();
     }
     // ImGui::PopItemWidth();
     ImGui::End();
 }
 
-void android_main(struct android_app * app) { // NOLINT(readability-identifier-naming)
-    cxx::AndroidLogger::logInfo("android_main: %s", "start");
+// NOLINTNEXTLINE(readability-identifier-naming)
+void android_main(struct android_app * app) {
+    SPDLOG_INFO("android_main: %s", "start");
 
-    app->onAppCmd = handleAppCmd;
-    app->onInputEvent = handleInputEvent;
+    auto mainActivity = std::make_shared<cxx::AndroidMainActivity>(app);
+    cxx::AndroidMainActivity::set(mainActivity);
 
-    cxx::MainActivity::get()->setBackgroudColor(BACKGROUD_COLOR);
-
-    while (true)
-    {
-        int outEvents;
-        struct android_poll_source * outData;
-
-        // Poll all events. If the app is not visible, this loop blocks until gInitialized == true.
-        while (ALooper_pollOnce(cxx::MainActivity::get()->isInitialized() ? 0 : -1, nullptr, &outEvents, (void **)&outData) >= 0)
-        {
-            // Process one event
-            if (outData != nullptr) {
-                outData->process(app, outData);
-            }
-
-            // Exit the app by returning from within the infinite loop
-            if (app->destroyRequested != 0)
-            {
-                // shutdown() should have been called already while processing the
-                // app command APP_CMD_TERM_WINDOW. But we play save here
-                if (!cxx::MainActivity::get()->isInitialized()) {
-                    cxx::MainActivity::get()->shutdown();
-                }
-
-                return;
-            }
-        }
-
-        // Initiate a new frame
-        cxx::MainActivity::get()->mainLoopStep(drawLoop);
-    }
+    mainActivity->setBackgroudColor(BACKGROUD_COLOR);
+    mainActivity->run();
 }

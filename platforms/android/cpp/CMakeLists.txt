@@ -15,7 +15,6 @@ LIBS(
   android
   EGL
   GLESv3
-  log
 )
 
 INCLUDEDIRS(
@@ -34,5 +33,4 @@ target_compile_definitions(android-lib PRIVATE
 
 add_subdirectory(app_glue)
 add_subdirectory(camera)
-add_subdirectory(logger)
 add_subdirectory(main_activity)

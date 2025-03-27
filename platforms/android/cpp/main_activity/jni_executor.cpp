@@ -1,6 +1,6 @@
 #include "jni_executor.h"
 
-#include <platforms/android/cpp/logger/logger.h>
+#include <spdlog/spdlog.h>
 
 #include <string>
 
@@ -23,7 +23,7 @@ cxx::JNIExecutor::JNIExecutor(JavaVM * javaVm, jobject javaClassObject, std::str
 cxx::JNIExecutor::~JNIExecutor() {
     jint jniReturn = javaVm_->DetachCurrentThread();
     if (jniReturn != JNI_OK) { // for noexcept
-        cxx::AndroidLogger::logError("%s", "~Executor:: Can't detach current thread");
+        SPDLOG_ERROR("%s", "~Executor:: Can't detach current thread");
     }
 }
 

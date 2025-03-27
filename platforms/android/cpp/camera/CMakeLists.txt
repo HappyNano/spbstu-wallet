@@ -8,9 +8,9 @@ SRCS(
 LIBS(
   ${OpenCV_LIBS}
   imgui::imgui
+  spdlog::spdlog
   android
 
-  cxx-logger
   utils-singleton
 )
 

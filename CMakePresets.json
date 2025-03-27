@@ -17,12 +17,28 @@
       }
     },
     {
+      "name": "default_linux",
+      "displayName": "Default Linux Build",
+      "description": "Default Linux build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "PLATFORM": "LINUX",
+        "VCPKG_TARGET_TRIPLET":
+        {
+            "type": "STRING",
+            "value": "x64-linux"
+        },
+        "BUILD_TESTING": false,
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
       "name": "default_android",
       "displayName": "Default Android Build",
       "description": "Default Android build with vcpkg",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "BUILD_ANDROID": true,
+        "PLATFORM": "ANDROID",
         "ANDROID_ABI": "armeabi-v7a",
         "ANDROID_PLATFORM": "android-24",
         "BUILD_TESTING": false,

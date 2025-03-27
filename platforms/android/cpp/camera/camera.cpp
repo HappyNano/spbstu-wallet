@@ -1,8 +1,9 @@
 #include "camera.h"
 
-#include <android/log.h>
-#include <memory>
 #include <opencv4/opencv2/opencv.hpp>
+#include <spdlog/spdlog.h>
+
+#include <memory>
 
 cxx::Texture::Texture(jbyte * data, int width, int height, int channels)
   : data{ data }
@@ -78,7 +79,7 @@ auto cxx::Texture::isVertical() const -> bool {
 auto cxx::CameraHelper::newTexture(jbyte * data, int width, int height, int channels) -> void {
     std::lock_guard< std::mutex > lock(mutex_);
     lastTexture_ = std::make_shared< Texture >(data, width, height, channels);
-    __android_log_print(ANDROID_LOG_INFO, "CameraHelperJni", "New data width %i height %i addr %llu", width, height, (unsigned long long)lastTexture_.get());
+    SPDLOG_INFO("CameraHelperJni: New data width %i height %i addr %llu", width, height, (unsigned long long)lastTexture_.get());
 }
 
 auto cxx::CameraHelper::last() const -> Texture::shared {

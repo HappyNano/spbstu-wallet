@@ -1,25 +1,17 @@
 #pragma once
 
-#include <jni.h>
-
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
-#include <android/log.h>
-#include <android_native_app_glue.h>
 #include <imgui.h>
 
-#include <platforms/android/cpp/main_activity/jni_executor.h>
-#include <utils/singleton/singleton.h>
+#include <platforms/common/main_activity/i_main_activity.h>
 
 #include <filesystem>
 #include <optional>
 #include <string_view>
 
 namespace cxx {
-    class MainActivity final: public util::Singleton< MainActivity > {
-    public:
-        static constexpr const char * INI_FILENAME = "imgui.ini";
-
+    class SDLMainActivity final: public cxx::IMainActivity {
     public:
         void init(struct android_app * app);
         void shutdown();
@@ -27,7 +19,7 @@ namespace cxx {
         void mainLoopStep(const std::function< void(void) > & drawFunction);
 
     public:
-        ~MainActivity() override;
+        ~SDLMainActivity() override;
 
         auto isInitialized() const noexcept -> bool;
         auto getEGLDisplay() -> const EGLDisplay &;
@@ -51,8 +43,6 @@ namespace cxx {
         void hideSoftKeyboardInputUnsafe();
         void pollUnicodeCharsUnsafe();
         void getStatusBarHeightUnsafe();
-
-        auto createExecutorUnsafe(std::string_view name, std::string_view sign) -> JNIExecutor;
 
     private:
         bool initialized_ = false;

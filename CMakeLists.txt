@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
 
-if(BUILD_ANDROID)
+if(PLATFORM STREQUAL "ANDROID")
   include(${CMAKE_SOURCE_DIR}/cmake/vcpkg_android.cmake)
+  list(APPEND VCPKG_MANIFEST_FEATURES "android")
+elseif(PLATFORM STREQUAL "LINUX" OR PLATFORM STREQUAL "WIN" OR PLATFORM STREQUAL "APPLE")
+  list(APPEND VCPKG_MANIFEST_FEATURES "other-platform")
 endif()
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 

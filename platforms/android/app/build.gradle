@@ -16,7 +16,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DBUILD_ANDROID=yes"
+                arguments "-DPLATFORM=ANDROID"
             }
         }
 

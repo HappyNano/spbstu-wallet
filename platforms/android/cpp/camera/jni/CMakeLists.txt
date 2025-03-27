@@ -6,6 +6,7 @@ SRCS(
 )
 
 LIBS(
+  spdlog::spdlog
   android
 
   cxx-camera

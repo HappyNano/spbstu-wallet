@@ -1,10 +1,13 @@
-#include "main_activity.h"
+#include "android_main_activity.h"
 
+#include <fmt/base.h>
 #include <imgui.h>
 #include <imgui_impl_android.h>
 #include <imgui_impl_opengl3.h>
 
-#include <platforms/android/cpp/logger/logger.h>
+#include <spdlog/common.h>
+#include <spdlog/sinks/android_sink.h>
+#include <spdlog/spdlog.h>
 
 #include <exception>
 #include <filesystem>
@@ -12,51 +15,88 @@
 namespace {
 
     template < typename Class, typename Func >
-    int safeCallMethod(Class * cls, Func func, const char * fmt) {
+    int safeCallMethod(Class * cls, Func func, std::string_view fmt) {
         try {
             (cls->*func)();
         } catch (const std::exception & e) {
-            cxx::AndroidLogger::logError(fmt, e.what());
+            SPDLOG_ERROR(fmt::runtime(fmt), e.what());
             return -1;
         }
 
         return 0;
     }
 
+    // Android native glue parts
+    void handleAppCmd(struct android_app * /*app*/, int32_t appCmd) {
+        switch (appCmd)
+        {
+        case APP_CMD_SAVE_STATE:
+            break;
+        case APP_CMD_INIT_WINDOW:
+            cxx::AndroidMainActivity::get()->init();
+            break;
+        case APP_CMD_TERM_WINDOW:
+            cxx::AndroidMainActivity::get()->shutdown();
+            break;
+        case APP_CMD_GAINED_FOCUS:
+        case APP_CMD_LOST_FOCUS:
+            break;
+        }
+    }
+
+    int32_t handleInputEvent(struct android_app * /*app*/, AInputEvent * inputEvent) {
+        return ImGui_ImplAndroid_HandleInputEvent(inputEvent);
+    }
+
 } // unnamed namespace
 
-cxx::MainActivity::~MainActivity() {
+cxx::AndroidMainActivity::AndroidMainActivity(struct android_app * app)
+  : app_{ std::move(app) } {
+    app_->onAppCmd = handleAppCmd;
+    app_->onInputEvent = handleInputEvent;
+}
+
+cxx::AndroidMainActivity::~AndroidMainActivity() {
     shutdown();
 }
 
-void cxx::MainActivity::init(struct android_app * app) {
-    cxx::AndroidLogger::logInfo("MainActivity: %s", "Initialization");
+void cxx::AndroidMainActivity::initImpl() {
     if (initialized_) {
         return;
     }
 
-    app_ = app;
+    // Init logger
+    auto logger = spdlog::android_logger_mt("android");
+#ifndef NDEBUG
+    logger->set_level(spdlog::level::debug);
+#else
+    logger->set_level(spdlog::level::info);
+#endif
+    spdlog::set_default_logger(std::move(logger));
+
     ANativeWindow_acquire(app_->window);
+
+    SPDLOG_INFO("MainActivity: %s", "Initialization");
 
     // Initialize EGL
     // This is mostly boilerplate code for EGL...
     {
         eglDisplay_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         if (eglDisplay_ == EGL_NO_DISPLAY) {
-            AndroidLogger::logError("%s", "eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
+            SPDLOG_ERROR("MainActivity: %s", "eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
         }
 
         if (eglInitialize(eglDisplay_, nullptr, nullptr) != EGL_TRUE) {
-            AndroidLogger::logError("%s", "eglInitialize() returned with an error");
+            SPDLOG_ERROR("MainActivity: %s", "eglInitialize() returned with an error");
         }
 
         const EGLint eglAttributes[] = { EGL_BLUE_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_RED_SIZE, 8, EGL_DEPTH_SIZE, 24, EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_NONE };
         EGLint numConfigs = 0;
         if (eglChooseConfig(eglDisplay_, eglAttributes, nullptr, 0, &numConfigs) != EGL_TRUE) {
-            AndroidLogger::logError("%s", "eglChooseConfig() returned with an error");
+            SPDLOG_ERROR("MainActivity: %s", "eglChooseConfig() returned with an error");
         }
         if (numConfigs == 0) {
-            AndroidLogger::logError("%s", "eglChooseConfig() returned 0 matching config");
+            SPDLOG_ERROR("MainActivity: %s", "eglChooseConfig() returned 0 matching config");
         }
 
         // Get the first matching config
@@ -71,7 +111,7 @@ void cxx::MainActivity::init(struct android_app * app) {
         eglContext_ = eglCreateContext(eglDisplay_, eglConfig, EGL_NO_CONTEXT, eglContextAttributes);
 
         if (eglContext_ == EGL_NO_CONTEXT) {
-            AndroidLogger::logError("%s", "eglCreateContext() returned EGL_NO_CONTEXT");
+            SPDLOG_ERROR("MainActivity: %s", "eglCreateContext() returned EGL_NO_CONTEXT");
         }
 
         eglSurface_ = eglCreateWindowSurface(eglDisplay_, eglConfig, app_->window, nullptr);
@@ -83,7 +123,7 @@ void cxx::MainActivity::init(struct android_app * app) {
     ImGui::CreateContext();
     ImGuiIO & io = ImGui::GetIO();
 
-    iniPath_ = std::filesystem::path(app->activity->internalDataPath) / INI_FILENAME;
+    iniPath_ = std::filesystem::path(app_->activity->internalDataPath) / INI_FILENAME;
     io.IniFilename = iniPath_.c_str();
 
     // Setup Dear ImGui style
@@ -119,12 +159,12 @@ void cxx::MainActivity::init(struct android_app * app) {
     // Arbitrary scale-up
     ImGui::GetStyle().ScaleAllSizes(3.0f);
 
-    cxx::AndroidLogger::logInfo("MainActivity: %s", "Successful initialized");
+    SPDLOG_INFO("MainActivity: %s", "Successful initialized");
     initialized_ = true;
 }
 
-void cxx::MainActivity::shutdown() {
-    cxx::AndroidLogger::logInfo("MainActivity: %s", "Shutdown");
+void cxx::AndroidMainActivity::shutdownImpl() {
+    SPDLOG_INFO("MainActivity: %s", "Shutdown");
     if (!initialized_) {
         return;
     }
@@ -154,27 +194,54 @@ void cxx::MainActivity::shutdown() {
     eglSurface_ = EGL_NO_SURFACE;
     ANativeWindow_release(app_->window);
 
+    // Reset logger
+    spdlog::shutdown();
+
     initialized_ = false;
 }
 
-auto cxx::MainActivity::isInitialized() const noexcept -> bool {
-    return initialized_;
-}
-auto cxx::MainActivity::getEGLDisplay() -> const EGLDisplay & {
+auto cxx::AndroidMainActivity::getEGLDisplay() -> const EGLDisplay & {
     return eglDisplay_;
 }
-auto cxx::MainActivity::getEGLSurface() -> const EGLSurface & {
+auto cxx::AndroidMainActivity::getEGLSurface() -> const EGLSurface & {
     return eglSurface_;
 }
-auto cxx::MainActivity::getEGLContext() -> const EGLContext & {
+auto cxx::AndroidMainActivity::getEGLContext() -> const EGLContext & {
     return eglContext_;
 }
 
-void cxx::MainActivity::setBackgroudColor(ImVec4 color) {
-    backgroudColor_ = color;
+void cxx::AndroidMainActivity::setBackgroudColor(ImVec4 color) {
+    backgroudColor = color;
 }
 
-void cxx::MainActivity::mainLoopStep(const std::function< void(void) > & drawFunction) {
+auto cxx::AndroidMainActivity::closeCamera() noexcept -> int {
+    return safeCallMethod(this, &AndroidMainActivity::closeCameraUnsafe, "MainActivity: closeCameraUnsafe: %s");
+}
+
+auto cxx::AndroidMainActivity::openCamera() noexcept -> int {
+    return safeCallMethod(this, &AndroidMainActivity::openCameraUnsafe, "MainActivity: openCameraUnsafe: %s");
+}
+
+auto cxx::AndroidMainActivity::showSoftKeyboardInput() noexcept -> int {
+    return safeCallMethod(this, &AndroidMainActivity::showSoftKeyboardInputUnsafe, "MainActivity: showSoftKeyboardInput: %s");
+}
+
+auto cxx::AndroidMainActivity::hideSoftKeyboardInput() noexcept -> int {
+    return safeCallMethod(this, &AndroidMainActivity::hideSoftKeyboardInputUnsafe, "MainActivity: hideSoftKeyboardInput: %s");
+}
+
+auto cxx::AndroidMainActivity::pollUnicodeChars() noexcept -> int {
+    return safeCallMethod(this, &AndroidMainActivity::pollUnicodeCharsUnsafe, "MainActivity: pollUnicodeChars: %s");
+}
+
+auto cxx::AndroidMainActivity::getStatusBarHeight() noexcept -> int {
+    if (!statusBarHeight.has_value()) {
+        getStatusBarHeightUnsafe();
+    }
+    return statusBarHeight.value_or(0);
+}
+
+void cxx::AndroidMainActivity::mainLoopStep() {
     ImGuiIO & io = ImGui::GetIO();
     if (getEGLDisplay() == EGL_NO_DISPLAY) {
         return;
@@ -195,61 +262,65 @@ void cxx::MainActivity::mainLoopStep(const std::function< void(void) > & drawFun
     ImGui_ImplAndroid_NewFrame();
     ImGui::NewFrame();
 
-    drawFunction();
+    mainLoop_->draw(shared_from_this());
 
     // Rendering
     ImGui::Render();
     glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    glClearColor(backgroudColor_.x, backgroudColor_.y, backgroudColor_.z, backgroudColor_.w);
+    glClearColor(backgroudColor.x, backgroudColor.y, backgroudColor.z, backgroudColor.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     eglSwapBuffers(getEGLDisplay(), getEGLSurface());
 }
 
-auto cxx::MainActivity::closeCamera() noexcept -> int {
-    return safeCallMethod(this, &MainActivity::closeCameraUnsafe, "closeCameraUnsafe: %s");
-}
+void cxx::AndroidMainActivity::run() {
+    while (true)
+    {
+        int outEvents;
+        struct android_poll_source * outData;
 
-auto cxx::MainActivity::openCamera() noexcept -> int {
-    return safeCallMethod(this, &MainActivity::openCameraUnsafe, "openCameraUnsafe: %s");
-}
+        // Poll all events. If the app is not visible, this loop blocks until gInitialized == true.
+        while (ALooper_pollOnce(isInitialized() ? 0 : -1, nullptr, &outEvents, (void **)&outData) >= 0)
+        {
+            // Process one event
+            if (outData != nullptr) {
+                outData->process(app_, outData);
+            }
 
-auto cxx::MainActivity::showSoftKeyboardInput() noexcept -> int {
-    return safeCallMethod(this, &MainActivity::showSoftKeyboardInputUnsafe, "showSoftKeyboardInput: %s");
-}
+            // Exit the app by returning from within the infinite loop
+            if (app_->destroyRequested != 0)
+            {
+                // shutdown() should have been called already while processing the
+                // app command APP_CMD_TERM_WINDOW. But we play save here
+                if (!isInitialized()) {
+                    shutdown();
+                }
+                return;
+            }
+        }
 
-auto cxx::MainActivity::hideSoftKeyboardInput() noexcept -> int {
-    return safeCallMethod(this, &MainActivity::hideSoftKeyboardInputUnsafe, "hideSoftKeyboardInput: %s");
-}
-
-auto cxx::MainActivity::pollUnicodeChars() noexcept -> int {
-    return safeCallMethod(this, &MainActivity::pollUnicodeCharsUnsafe, "pollUnicodeChars: %s");
-}
-
-auto cxx::MainActivity::getStatusBarHeight() noexcept -> int {
-    if (!statusBarHeight_.has_value()) {
-        getStatusBarHeightUnsafe();
+        // Initiate a new frame
+        mainLoopStep();
     }
-    return statusBarHeight_.value_or(0);
 }
 
-void cxx::MainActivity::closeCameraUnsafe() {
+void cxx::AndroidMainActivity::closeCameraUnsafe() {
     auto executor = createExecutorUnsafe("closeCamera", "()V");
     executor.call< void >();
 }
 
-void cxx::MainActivity::openCameraUnsafe() {
+void cxx::AndroidMainActivity::openCameraUnsafe() {
     auto executor = createExecutorUnsafe("openCamera", "()V");
     // jstring message = executor.getJavaEnv()->NewStringUTF("Привет из C++!!!!");
     executor.call< void >();
 }
 
-void cxx::MainActivity::showSoftKeyboardInputUnsafe() {
+void cxx::AndroidMainActivity::showSoftKeyboardInputUnsafe() {
     auto executor = createExecutorUnsafe("showSoftInput", "()V");
     executor.call< void >();
 }
 
-void cxx::MainActivity::hideSoftKeyboardInputUnsafe() {
+void cxx::AndroidMainActivity::hideSoftKeyboardInputUnsafe() {
     auto executor = createExecutorUnsafe("hideSoftInput", "()V");
     executor.call< void >();
 }
@@ -257,7 +328,7 @@ void cxx::MainActivity::hideSoftKeyboardInputUnsafe() {
 // Unfortunately, the native KeyEvent implementation has no getUnicodeChar() function.
 // Therefore, we implement the processing of KeyEvents in MainActivity.kt and poll
 // the resulting Unicode characters here via JNI and send them to Dear ImGui.
-void cxx::MainActivity::pollUnicodeCharsUnsafe() {
+void cxx::AndroidMainActivity::pollUnicodeCharsUnsafe() {
     auto executor = createExecutorUnsafe("pollUnicodeChar", "()I");
 
     // Send the actual characters to Dear ImGui
@@ -268,12 +339,12 @@ void cxx::MainActivity::pollUnicodeCharsUnsafe() {
     }
 }
 
-void cxx::MainActivity::getStatusBarHeightUnsafe() {
+void cxx::AndroidMainActivity::getStatusBarHeightUnsafe() {
     auto executor = createExecutorUnsafe("getStatusBarHeight", "()I");
-    statusBarHeight_.emplace(executor.call< jint >());
+    statusBarHeight.emplace(executor.call< jint >());
 }
 
-auto cxx::MainActivity::createExecutorUnsafe(std::string_view name, std::string_view sign) -> JNIExecutor {
+auto cxx::AndroidMainActivity::createExecutorUnsafe(std::string_view name, std::string_view sign) -> JNIExecutor {
     return JNIExecutor(
      app_->activity->vm,
      app_->activity->clazz,

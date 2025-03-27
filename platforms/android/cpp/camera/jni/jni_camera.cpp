@@ -1,16 +1,16 @@
 #include "jni_camera.h"
 
-#include <android/log.h>
-#include <cstring>
+#include <spdlog/spdlog.h>
 
 #include <platforms/android/cpp/camera/camera.h>
-#include <platforms/android/cpp/logger/logger.h>
+
+#include <cstring>
 
 extern "C" JNIEXPORT void JNICALL
  Java_imgui_example_android_CameraHelper_onImageAvailable(JNIEnv * env, jclass, jbyteArray data, jint width, jint height) {
     static constexpr int CHANNELS = 4;
 
-    cxx::AndroidLogger::logInfo("%s", "New data avaible");
+    SPDLOG_INFO("JNI: onImageAvailable: %s", "New data avaible");
 
     jbyte * yuvData = env->GetByteArrayElements(data, nullptr);
 
