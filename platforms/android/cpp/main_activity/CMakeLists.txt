@@ -1,4 +1,4 @@
-LIBRARY(cxx-main_activity)
+LIBRARY(android-cxx-main_activity)
 
 SRCS(
   ${PROJECT_SOURCE_DIR}/platforms/android/cpp/main_activity/android_main_activity.h
@@ -23,6 +23,6 @@ INCLUDEDIRS(
 
 END()
 
-target_compile_definitions(cxx-main_activity PRIVATE
+target_compile_definitions(android-cxx-main_activity PRIVATE
   IMGUI_IMPL_OPENGL_ES3
 )

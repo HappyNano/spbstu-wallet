@@ -7,7 +7,7 @@
 namespace cxx {
     struct Context {
         // void setParam(std::string key, );
-        std::optional<int> statusBarHeight;
+        std::optional< int > statusBarHeight;
         ImVec4 backgroudColor;
     };
 } // namespace cxx

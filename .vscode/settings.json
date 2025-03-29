@@ -17,5 +17,8 @@
   },
   "cmake.buildDirectory": "${workspaceFolder}/build",
   "cmake.parallelJobs": 11,
-  "workbench.editor.wrapTabs": true
+  "workbench.editor.wrapTabs": true,
+  "clangd.fallbackFlags": [
+    "-std=c++20"
+  ]
 }

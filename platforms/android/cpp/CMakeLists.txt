@@ -5,16 +5,18 @@ SRCS(
 )
 
 LIBS(
-  app-glue
-  cxx-camera
-  jni-camera
-  cxx-main_activity
-
   imgui::imgui
 
   android
   EGL
   GLESv3
+
+  app-glue
+  android-cxx-camera
+  android-cxx-camera-jni
+  android-cxx-main_activity
+  common-main_activity-lib
+  common-main_loop
 )
 
 INCLUDEDIRS(

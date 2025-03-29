@@ -10,4 +10,4 @@ else()
   message(FATAL_ERROR "To build choose PLATFORM (ANDROID, LINUX, WIN, APPLE)")
 endif()
 
-# add_subdirectory(common)
+add_subdirectory(common)

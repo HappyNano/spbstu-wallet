@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 android {
     compileSdkVersion 34
     buildToolsVersion "34.0.0"
-    ndkVersion "25.0.8775105"
+    ndkVersion "26.0.10792818"
 
     defaultConfig {
         applicationId "imgui.example.android"

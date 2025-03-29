@@ -6,7 +6,8 @@ IMainActivity::IMainActivity()
   : Context{
       .statusBarHeight = 0,
       .backgroudColor = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f }
-} {}
+} {
+}
 
 void IMainActivity::init() {
     if (!initialized_) {
@@ -18,10 +19,6 @@ void IMainActivity::shutdown() {
     if (initialized_) {
         shutdownImpl();
     }
-}
-
-void IMainActivity::mainLoopStep() {
-    mainLoopStepImpl();
 }
 
 auto IMainActivity::isInitialized() const noexcept -> bool {

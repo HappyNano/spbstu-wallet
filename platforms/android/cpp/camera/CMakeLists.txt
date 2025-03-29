@@ -1,4 +1,4 @@
-LIBRARY(cxx-camera)
+LIBRARY(android-cxx-camera)
 
 SRCS(
   ${PROJECT_SOURCE_DIR}/platforms/android/cpp/camera/camera.h
@@ -6,12 +6,13 @@ SRCS(
 )
 
 LIBS(
+  android-cxx-main_activity
+  common-camera-lib
+
   ${OpenCV_LIBS}
   imgui::imgui
   spdlog::spdlog
   android
-
-  utils-singleton
 )
 
 INCLUDEDIRS(

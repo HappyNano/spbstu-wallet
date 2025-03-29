@@ -1,88 +1,28 @@
 #include "camera.h"
 
-#include <opencv4/opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
 
-#include <memory>
+using namespace cxx;
 
-cxx::Texture::Texture(jbyte * data, int width, int height, int channels)
-  : data{ data }
-  , width{ width }
-  , height{ height }
-  , channels{ channels } {
+AndroidCamera::AndroidCamera(
+ std::weak_ptr< AndroidMainActivity > mainActivity,
+ std::shared_ptr< CameraSink > cameraSink)
+  : ICamera(std::move(cameraSink))
+  , mainActivity_(std::move(mainActivity)) {
 }
 
-cxx::Texture::Texture(const Texture & obj)
-  : data{ std::make_unique< jbyte >(obj.width * obj.height * obj.channels) }
-  , width{ obj.width }
-  , height{ obj.height }
-  , channels{ obj.channels } {
-    memcpy(data.get(), obj.data.get(), width * height * channels);
-}
-
-cxx::Texture::Texture(Texture && obj)
-  : data{ std::move(obj.data) }
-  , width{ obj.width }
-  , height{ obj.height }
-  , channels{ obj.channels } {
-    obj.data.release();
-    obj.width = 0;
-    obj.height = 0;
-    obj.channels = 0;
-}
-
-cxx::Texture::~Texture() = default;
-
-auto cxx::Texture::operator=(const Texture & obj) -> Texture & {
-    if (this != std::addressof(obj)) {
-        Texture tmp(obj);
-        swap(tmp);
+void AndroidCamera::openCamera() {
+    if (auto ma = mainActivity_.lock()) {
+        ma->openCamera();
+    } else {
+        SPDLOG_ERROR("AndroidCamera: openCamera: %s", "expired mainActivity");
     }
-    return *this;
 }
 
-auto cxx::Texture::operator=(Texture && obj) -> Texture & {
-    if (this != std::addressof(obj)) {
-        Texture tmp(std::move(obj));
-        swap(tmp);
+void AndroidCamera::closeCamera() {
+    if (auto ma = mainActivity_.lock()) {
+        ma->closeCamera();
+    } else {
+        SPDLOG_ERROR("AndroidCamera: closeCamera: %s", "expired mainActivity");
     }
-    return *this;
-}
-
-void cxx::Texture::swap(Texture & obj) noexcept {
-    data.swap(obj.data);
-    std::swap(width, obj.width);
-    std::swap(height, obj.height);
-    std::swap(channels, obj.channels);
-}
-
-auto cxx::Texture::rotate() -> void {
-    cv::Mat mat(height, width, CV_MAKETYPE(CV_8U, channels), data.get());
-    width = 640;
-    height = 480;
-    memcpy(
-     data.get(),
-     mat(cv::Rect((mat.cols - width) / 2, (mat.rows - height) / 2, width, height)).clone().data,
-     width * height * channels);
-
-    cv::Mat rgbaMat(height, width, CV_MAKETYPE(CV_8U, channels), data.get());
-    cv::Mat rotatedMat;
-    cv::rotate(rgbaMat, rotatedMat, cv::ROTATE_90_CLOCKWISE);
-    memcpy(data.get(), rotatedMat.data, width * height * channels);
-    std::swap(width, height);
-}
-
-auto cxx::Texture::isVertical() const -> bool {
-    return width < height;
-}
-
-auto cxx::CameraHelper::newTexture(jbyte * data, int width, int height, int channels) -> void {
-    std::lock_guard< std::mutex > lock(mutex_);
-    lastTexture_ = std::make_shared< Texture >(data, width, height, channels);
-    SPDLOG_INFO("CameraHelperJni: New data width %i height %i addr %llu", width, height, (unsigned long long)lastTexture_.get());
-}
-
-auto cxx::CameraHelper::last() const -> Texture::shared {
-    std::lock_guard< std::mutex > lock(mutex_);
-    return lastTexture_;
 }

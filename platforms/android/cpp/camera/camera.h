@@ -1,49 +1,22 @@
 #pragma once
 
-#include <jni.h>
-
-#include <utils/singleton/singleton.h>
-
-#include <memory>
-#include <mutex>
+#include <platforms/common/camera/i_camera.h>
+#include <platforms/android/cpp/main_activity/android_main_activity.h>
 
 namespace cxx {
 
-    class Texture final {
+    class AndroidCamera final: public ICamera {
     public:
-        using shared = std::shared_ptr< Texture >;
+        explicit AndroidCamera(
+         std::weak_ptr< AndroidMainActivity > mainActivity,
+         std::shared_ptr< CameraSink > cameraSink);
+        ~AndroidCamera() override = default;
 
-        Texture(jbyte * data, int width, int height, int channels);
-        Texture(const Texture & obj);
-        Texture(Texture && obj);
-        ~Texture();
-
-        auto operator=(const Texture & obj) -> Texture &;
-        auto operator=(Texture && obj) -> Texture &;
-
-        void swap(Texture & obj) noexcept;
-
-        std::unique_ptr< jbyte > data;
-        int width;
-        int height;
-        int channels;
-
-        auto rotate() -> void;
-        auto isVertical() const -> bool;
-    };
-
-    class CameraHelper final: public util::Singleton< CameraHelper > {
-    public:
-        CameraHelper() = default;
-        ~CameraHelper() override = default;
-
-        auto newTexture(jbyte * data, int width, int height, int channels) -> void;
-        auto last() const -> Texture::shared;
+        void openCamera() override;
+        void closeCamera() override;
 
     private:
-        Texture::shared lastTexture_;
-
-        mutable std::mutex mutex_;
+        std::weak_ptr< AndroidMainActivity > mainActivity_;
     };
 
 } // namespace cxx

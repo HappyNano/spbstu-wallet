@@ -5,7 +5,6 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <android/log.h>
-#include <android_native_app_glue.h>
 #include <imgui.h>
 #include <spdlog/fwd.h>
 
@@ -16,6 +15,9 @@
 #include <filesystem>
 #include <memory>
 #include <string_view>
+
+// NOLINTNEXTLINE(readability-identifier-naming)
+struct android_app;
 
 namespace cxx {
     class AndroidMainActivity final: public IMainActivity, public std::enable_shared_from_this< AndroidMainActivity > {

@@ -1,4 +1,4 @@
-LIBRARY(jni-camera SHARED)
+LIBRARY(android-cxx-camera-jni SHARED)
 
 SRCS(
   ${PROJECT_SOURCE_DIR}/platforms/android/cpp/camera/jni/jni_camera.h
@@ -6,10 +6,12 @@ SRCS(
 )
 
 LIBS(
+  android-cxx-camera_sink-jni
+
   spdlog::spdlog
   android
-
-  cxx-camera
 )
 
 END()
+
+add_subdirectory(sink)

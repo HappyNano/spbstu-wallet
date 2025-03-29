@@ -4,16 +4,13 @@
 #include <GLES3/gl3.h>
 #include <imgui.h>
 
-#include <memory>
+#include <platforms/common/main_loop/main_loop.h>
 #include <utils/singleton/singleton.h>
 
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <string_view>
-
-#include "context.h"
-#include "main_loop.h"
-#include "platforms/common/main_activity/main_loop.h"
 
 namespace cxx {
     class IMainActivity: public util::Singleton< IMainActivity >, public Context {
