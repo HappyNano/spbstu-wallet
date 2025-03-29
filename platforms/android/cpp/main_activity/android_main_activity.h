@@ -36,7 +36,9 @@ namespace cxx {
         auto showSoftKeyboardInput() noexcept -> int;
         auto hideSoftKeyboardInput() noexcept -> int;
         auto pollUnicodeChars() noexcept -> int;
-        auto getStatusBarHeight() noexcept -> int;
+
+        // Context
+        auto getStatusBarHeight() noexcept -> std::optional< int > override;
 
     private:
         // IMainActivity

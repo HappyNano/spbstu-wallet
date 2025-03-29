@@ -77,13 +77,13 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
         }
     }
     ImGuiViewport * viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(0, context->statusBarHeight.value_or(0)), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(0, context->getStatusBarHeight().value_or(0)), ImGuiCond_Always);
     // ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
 
     ImGui::StyleColorsLight(&ImGui::GetStyle());
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, context->backgroudColor);
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, context->getBackgroundColor().value_or(ImVec4{ 1, 1, 1, 1 }));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 

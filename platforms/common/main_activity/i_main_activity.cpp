@@ -2,12 +2,7 @@
 
 using namespace cxx;
 
-IMainActivity::IMainActivity()
-  : Context{
-      .statusBarHeight = 0,
-      .backgroudColor = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f }
-} {
-}
+IMainActivity::IMainActivity() = default;
 
 void IMainActivity::init() {
     if (!initialized_) {

@@ -43,7 +43,6 @@ namespace cxx {
         auto showSoftKeyboardInput() noexcept -> int;
         auto hideSoftKeyboardInput() noexcept -> int;
         auto pollUnicodeChars() noexcept -> int;
-        auto getStatusBarHeight() noexcept -> int;
 
     protected:
         IMainActivity();

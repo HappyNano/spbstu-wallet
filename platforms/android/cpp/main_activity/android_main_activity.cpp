@@ -1,11 +1,11 @@
 #include "android_main_activity.h"
 
 #include <GLES3/gl3.h>
+#include <android_native_app_glue.h>
 #include <fmt/base.h>
 #include <imgui.h>
 #include <imgui_impl_android.h>
 #include <imgui_impl_opengl3.h>
-#include <android_native_app_glue.h>
 
 #include <spdlog/common.h>
 #include <spdlog/sinks/android_sink.h>
@@ -213,7 +213,7 @@ auto cxx::AndroidMainActivity::getEGLContext() -> const EGLContext & {
 }
 
 void cxx::AndroidMainActivity::setBackgroudColor(ImVec4 color) {
-    backgroudColor = color;
+    backgroudColor_ = color;
 }
 
 auto cxx::AndroidMainActivity::closeCamera() noexcept -> int {
@@ -236,11 +236,11 @@ auto cxx::AndroidMainActivity::pollUnicodeChars() noexcept -> int {
     return safeCallMethod(this, &AndroidMainActivity::pollUnicodeCharsUnsafe, "MainActivity: pollUnicodeChars: %s");
 }
 
-auto cxx::AndroidMainActivity::getStatusBarHeight() noexcept -> int {
-    if (!statusBarHeight.has_value()) {
+auto cxx::AndroidMainActivity::getStatusBarHeight() noexcept -> std::optional< int > {
+    if (!statusBarHeight_.has_value()) {
         getStatusBarHeightUnsafe();
     }
-    return statusBarHeight.value_or(0);
+    return statusBarHeight_;
 }
 
 void cxx::AndroidMainActivity::mainLoopStep() {
@@ -269,6 +269,7 @@ void cxx::AndroidMainActivity::mainLoopStep() {
     // Rendering
     ImGui::Render();
     glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+    auto backgroudColor = getBackgroundColor().value_or(ImVec4(1, 1, 1, 1));
     glClearColor(backgroudColor.x, backgroudColor.y, backgroudColor.z, backgroudColor.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -343,7 +344,7 @@ void cxx::AndroidMainActivity::pollUnicodeCharsUnsafe() {
 
 void cxx::AndroidMainActivity::getStatusBarHeightUnsafe() {
     auto executor = createExecutorUnsafe("getStatusBarHeight", "()I");
-    statusBarHeight.emplace(executor.call< jint >());
+    statusBarHeight_.emplace(executor.call< jint >());
 }
 
 auto cxx::AndroidMainActivity::createExecutorUnsafe(std::string_view name, std::string_view sign) -> JNIExecutor {
