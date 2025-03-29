@@ -9,14 +9,7 @@ LIBS(
   android-cxx-main_activity
   common-camera-lib
 
-  ${OpenCV_LIBS}
-  imgui::imgui
   spdlog::spdlog
-  android
-)
-
-INCLUDEDIRS(
-  ${OpenCV_INCLUDE_DIRS}
 )
 
 END()

@@ -8,12 +8,15 @@ SRCS(
 )
 
 LIBS(
+  utils-singleton
+  common-main_activity
+
   ${OpenCV_LIBS}
   imgui::imgui
   spdlog::spdlog
   android
-
-  utils-singleton
+  EGL
+  GLESv3
 )
 
 INCLUDEDIRS(

@@ -6,10 +6,10 @@ SRCS(
 )
 
 LIBS(
+  common-camera-lib
+
   ${OpenCV_LIBS}
   imgui::imgui
-
-  EGL
   GLESv3
 )
 

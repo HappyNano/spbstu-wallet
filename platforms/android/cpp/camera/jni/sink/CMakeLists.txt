@@ -1,4 +1,4 @@
-LIBRARY(android-cxx-camera_sink-jni)
+LIBRARY(android-cxx-jni-camera_sink)
 
 SRCS(
   ${PROJECT_SOURCE_DIR}/platforms/android/cpp/camera/jni/sink/jni_camera_sink.h

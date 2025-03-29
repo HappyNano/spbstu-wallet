@@ -1,16 +1,13 @@
 #include "main_loop.h"
 
-#include <EGL/egl.h>
 #include <GLES3/gl3.h>
+#include <imgui.h>
+#include <spdlog/spdlog.h>
 
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/core/mat.hpp>
 #include <opencv4/opencv2/objdetect.hpp>
 #include <opencv4/opencv2/opencv.hpp>
-
-#include <imgui.h>
-
-#include <spdlog/spdlog.h>
 
 using namespace cxx;
 

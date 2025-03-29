@@ -1,5 +1,4 @@
 #include "camera_sink.h"
-#include <mutex>
 
 using namespace cxx;
 

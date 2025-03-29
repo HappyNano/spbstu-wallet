@@ -1,5 +1,6 @@
 #include "android_main_activity.h"
 
+#include <GLES3/gl3.h>
 #include <fmt/base.h>
 #include <imgui.h>
 #include <imgui_impl_android.h>

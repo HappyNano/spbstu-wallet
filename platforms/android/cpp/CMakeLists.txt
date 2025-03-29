@@ -5,18 +5,14 @@ SRCS(
 )
 
 LIBS(
-  imgui::imgui
-
-  android
-  EGL
-  GLESv3
-
   app-glue
   android-cxx-camera
-  android-cxx-camera-jni
+  android-cxx-jni-camera
+  android-cxx-jni-camera_sink
   android-cxx-main_activity
-  common-main_activity-lib
   common-main_loop
+
+  android
 )
 
 INCLUDEDIRS(
@@ -27,10 +23,6 @@ END()
 
 set(CMAKE_SHARED_LINKER_FLAGS
   "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate"
-)
-
-target_compile_definitions(android-lib PRIVATE
-  IMGUI_IMPL_OPENGL_ES3
 )
 
 add_subdirectory(app_glue)

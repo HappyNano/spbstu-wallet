@@ -1,16 +1,10 @@
 #pragma once
 
-#include <jni.h>
-
 #include <EGL/egl.h>
-#include <GLES3/gl3.h>
-#include <android/log.h>
 #include <imgui.h>
-#include <spdlog/fwd.h>
 
 #include <platforms/android/cpp/main_activity/jni_executor.h>
 #include <platforms/common/main_activity/i_main_activity.h>
-#include <utils/singleton/singleton.h>
 
 #include <filesystem>
 #include <memory>

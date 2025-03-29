@@ -9,8 +9,6 @@
 
 #include <filesystem>
 #include <memory>
-#include <optional>
-#include <string_view>
 
 namespace cxx {
     class IMainActivity: public util::Singleton< IMainActivity >, public Context {

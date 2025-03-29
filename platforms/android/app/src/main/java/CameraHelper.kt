@@ -17,7 +17,7 @@ class CameraHelper(private val context: Context) {
 
     companion object {
         init {
-            System.loadLibrary("jni-camera")
+            System.loadLibrary("android-cxx-jni-camera")
         }
     }
 
