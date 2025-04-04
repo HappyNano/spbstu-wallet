@@ -1,19 +1,16 @@
-LIBRARY(platforms-common-main_activity-lib)
+LIBRARY(sdl-main_activity)
 
 SRCS(
-  ${PROJECT_SOURCE_DIR}/platforms/common/main_activity/i_main_activity.cpp
-  ${PROJECT_SOURCE_DIR}/platforms/common/main_activity/i_main_activity.h
+  ${PROJECT_SOURCE_DIR}/platforms/sdl/main_activity/sdl_main_activity.cpp
+  ${PROJECT_SOURCE_DIR}/platforms/sdl/main_activity/sdl_main_activity.h
 )
 
 LIBS(
-  imgui::imgui
+  common-main_activity
 
-  EGL
-  GLESv3
+  imgui::imgui
+  ${SDL}
+  spdlog::spdlog
 )
 
 END()
-
-target_compile_definitions(android-lib PRIVATE
-  IMGUI_IMPL_OPENGL_ES3
-)

@@ -1,19 +1,13 @@
 EXECUTABLE(linux-main)
 
 SRCS(
-  ${PROJECT_SOURCE_DIR}/platforms/sdl/main.cpp
+  ${PROJECT_SOURCE_DIR}/platforms/sdl/main_activity/sdl_main>
 )
 
 LIBS(
   imgui::imgui
+  spdlog::spdlog
   ${SDL}
-
-  # EGL
-  # GLESv3
 )
 
 END()
-
-target_compile_definitions(linux-main PRIVATE
-IMGUI_IMPL_OPENGL_ES3
-)

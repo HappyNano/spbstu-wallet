@@ -29,7 +29,7 @@ namespace cxx {
          */
         virtual void run() = 0;
 
-        ~IMainActivity() override = default;
+        ~IMainActivity() override;
 
     public:
         auto isInitialized() const noexcept -> bool;

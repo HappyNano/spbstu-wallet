@@ -1,6 +1,12 @@
 #include "main_loop.h"
 
+// include for android build
+#ifdef __ANDROID__
 #include <GLES3/gl3.h>
+#else
+#include <SDL3/SDL_opengl.h>
+#endif
+
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 

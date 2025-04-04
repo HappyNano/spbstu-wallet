@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.12)
 
 if(PLATFORM STREQUAL "ANDROID")
   include(${CMAKE_SOURCE_DIR}/cmake/vcpkg_android.cmake)
-  list(APPEND VCPKG_MANIFEST_FEATURES "android")
+  list(APPEND VCPKG_MANIFEST_FEATURES "android")  # Feature in vcpkg.json
 elseif(PLATFORM STREQUAL "LINUX" OR PLATFORM STREQUAL "WIN" OR PLATFORM STREQUAL "APPLE")
-  list(APPEND VCPKG_MANIFEST_FEATURES "other-platform")
+  list(APPEND VCPKG_MANIFEST_FEATURES "other-platform")  # Feature in vcpkg.json
 endif()
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 
@@ -36,7 +36,7 @@ if(BUILD_TESTING)
   enable_testing()
 endif()
 
-find_package(spdlog REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(imgui REQUIRED)
 find_package(Stb REQUIRED)

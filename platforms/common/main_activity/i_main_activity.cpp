@@ -4,6 +4,10 @@ using namespace cxx;
 
 IMainActivity::IMainActivity() = default;
 
+IMainActivity::~IMainActivity() {
+    shutdown();
+}
+
 void IMainActivity::init() {
     if (!initialized_) {
         initImpl();

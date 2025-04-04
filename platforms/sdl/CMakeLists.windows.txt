@@ -7,13 +7,7 @@ SRCS(
 
 LIBS(
   imgui::imgui
-
-  EGL
-  GLESv3
+  spdlog::spdlog
 )
 
 END()
-
-target_compile_definitions(android-lib PRIVATE
-  IMGUI_IMPL_OPENGL_ES3
-)

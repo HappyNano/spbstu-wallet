@@ -12,7 +12,6 @@ LIBS(
 
   ${OpenCV_LIBS}
   imgui::imgui
-  GLESv3
 )
 
 INCLUDEDIRS(
