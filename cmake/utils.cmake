@@ -33,10 +33,11 @@ macro(GTEST)
 endmacro()
 
 macro(PROTO)
-  if(ARGC GREATER 1)
+  if(ARGC GREATER 2)
     message(FATAL_ERROR "Macro PROTO: Bad args")
   endif()
   set(SUIT "PROTO")
+  set(PROTO_PARAM ${ARGV0})
   set(SOURCES )
 endmacro()
 
@@ -56,13 +57,17 @@ macro(PROTOS)
   foreach(PROTO_NAME ${ARGN})
     set(PROTO_SRCS proto_srcs_${PROTO_NAME})
     set(PROTO_HDRS proto_hdrs_${PROTO_NAME})
+    set(PROTO_PRAM proto_pram_${PROTO_NAME})
     if(NOT DEFINED ${PROTO_SRCS} OR NOT DEFINED ${PROTO_HDRS})
       message(FATAL_ERROR "Sources or headers for ${PROTO_NAME} not defined")
     endif()
-    set(SOURCES ${SOURCES} ${${PROTO_SRCS}} ${${PROTO_HDRS}})
+    list(APPEND SOURCES ${${PROTO_SRCS}} ${${PROTO_HDRS}})
   endforeach()
-  set(INCLUDEDIRECTORIES ${INCLUDEDIRECTORIES} ${PROTOBUF_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
-  set(LIBRARIES ${LIBRARIES} protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
+  list(APPEND INCLUDEDIRECTORIES ${PROTOBUF_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
+  list(APPEND LIBRARIES protobuf::libprotobuf-lite)
+  if(${PROTO_PRAM} STREQUAL "GRPC")
+    list(APPEND LIBRARIES gRPC::grpc++)
+  endif()
 endmacro()
 
 function(generate_protobuf_sources PROTO_FILE)
@@ -72,18 +77,34 @@ function(generate_protobuf_sources PROTO_FILE)
   cmake_path(RELATIVE_PATH PROTO_DIR BASE_DIRECTORY ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE PROTO_DIR_REL)
   string(REPLACE "\/" "_" PROTO_DIR_REL_NAME ${PROTO_DIR_REL})
 
-  set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc")
-  set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h")
-
-  execute_process(
-    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-    --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-    --proto_path=${PROTO_DIR}
-    ${PROTO_FILE}
-  )
+  if(PROTO_PARAM STREQUAL "GRPC")
+    set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.cc")
+    set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.h")
+    set(PROTO_SRCS ${PROTO_SRCS} "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc")
+    set(PROTO_HDRS ${PROTO_HDRS} "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h")
+    find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
+    execute_process(
+      COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+      --proto_path=${PROTO_DIR}
+      --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+      --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+      --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
+      ${PROTO_FILE}
+    )
+  else()
+    set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc")
+    set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h")
+    execute_process(
+      COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+      --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+      --proto_path=${PROTO_DIR}
+      ${PROTO_FILE}
+    )
+  endif()
 
   set(proto_srcs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_SRCS} CACHE PATH SRCS)
   set(proto_hdrs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_HDRS} CACHE PATH HDRS)
+  set(proto_pram_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_PARAM} CACHE PATH PRAM)
 
   set(ALL_PROTO_SRCS ${ALL_PROTO_SRCS} ${PROTO_SRCS} CACHE PATH ALLSRCS)
   set(ALL_PROTO_HDRS ${ALL_PROTO_HDRS} ${PROTO_HDRS} CACHE PATH ALLHDRS)

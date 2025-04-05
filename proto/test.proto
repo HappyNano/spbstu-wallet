@@ -3,5 +3,5 @@ syntax = "proto3";
 message Animal {
   string species = 1;
   string name = 2;
-  int32 age = 3;
+  int32 ages = 3;
 }

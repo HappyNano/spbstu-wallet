@@ -5,6 +5,8 @@ if(PLATFORM STREQUAL "ANDROID")
   list(APPEND VCPKG_MANIFEST_FEATURES "android")  # Feature in vcpkg.json
 elseif(PLATFORM STREQUAL "LINUX" OR PLATFORM STREQUAL "WIN" OR PLATFORM STREQUAL "APPLE")
   list(APPEND VCPKG_MANIFEST_FEATURES "other-platform")  # Feature in vcpkg.json
+elseif(PLATFORM STREQUAL "BACKEND")
+  list(APPEND VCPKG_MANIFEST_FEATURES "backend")  # Feature in vcpkg.json
 endif()
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 
@@ -48,5 +50,9 @@ include_directories(${PROJECT_SOURCE_DIR})
 add_subdirectory(utils)
 add_subdirectory(wallet)
 add_subdirectory(proto)
-add_subdirectory(backend)
-add_subdirectory(platforms)
+if(PLATFORM STREQUAL "BACKEND")
+  find_package(gRPC CONFIG REQUIRED)
+  add_subdirectory(backend)
+else()
+  add_subdirectory(platforms)
+endif()

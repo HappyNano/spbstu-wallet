@@ -35,6 +35,12 @@
           ]
         }
       ]
+    },
+    "backend": {
+      "description": "Dependencies needed for the Backend Server building",
+      "dependencies": [
+        "grpc"
+      ]
     }
   }
 }

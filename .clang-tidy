@@ -1,5 +1,3 @@
-ExcludeHeaderFilterRegex: '.*proto.*'
-
 Checks: '-*,
   bugprone-inaccurate-erase,
   bugprone-infinite-loop,
@@ -111,3 +109,4 @@ CheckOptions:
     value: UPPER_CASE
 
 # WarningsAsErrors: '*'
+HeaderFilterRegex: '^(.*wallet.*\.(c|cpp|h|hpp))*$'

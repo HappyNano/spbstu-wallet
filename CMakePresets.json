@@ -46,6 +46,17 @@
       }
     },
     {
+      "name": "default_backend",
+      "displayName": "Default Backend Build",
+      "description": "Default Backend build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "PLATFORM": "BACKEND",
+        "BUILD_TESTING": false,
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
       "name": "default-test",
       "displayName": "Default Configuration for test",
       "binaryDir": "${sourceDir}/build",

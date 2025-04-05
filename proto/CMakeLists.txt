@@ -7,3 +7,4 @@ SRCS(
 END()
 
 add_subdirectory(testdir)
+add_subdirectory(helloworld)

@@ -5,8 +5,7 @@ SRCS(
 )
 
 PROTOS(
-  proto_test
-  proto_testdir_pp
+  proto_helloworld_helloworld
 )
 
 END()
