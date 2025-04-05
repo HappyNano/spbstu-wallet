@@ -11,7 +11,8 @@
     "spdlog",
     "stb",
     "opencv4",
-    "protobuf"
+    "protobuf",
+    "grpc"
   ],
   "features": {
     "android": {

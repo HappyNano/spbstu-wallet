@@ -1,6 +1,7 @@
 #pragma once
 
 #include <platforms/common/camera/i_camera.h>
+#include <platforms/common/client/interface/i_greeter_client.h>
 
 #include <memory>
 
@@ -12,13 +13,16 @@ namespace cxx {
      */
     class MainLoop final {
     public:
-        MainLoop(std::shared_ptr< ICamera > camera);
+        explicit MainLoop(
+         std::shared_ptr< ICamera > camera,
+         std::shared_ptr< helloworld::IGreeterClient > client);
         ~MainLoop() = default;
 
         void draw(const std::shared_ptr< Context > & context);
 
     private:
         const std::shared_ptr< ICamera > camera_;
+        const std::shared_ptr< helloworld::IGreeterClient > client_;
 
         // State settings
         bool fff_ = true;

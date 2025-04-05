@@ -24,8 +24,11 @@ static cv::Mat lastCorners;
 static std::string lastResult = "";
 constexpr int cropSize = 256;
 
-MainLoop::MainLoop(std::shared_ptr< ICamera > camera)
-  : camera_(std::move(camera)) {
+MainLoop::MainLoop(
+ std::shared_ptr< ICamera > camera,
+ std::shared_ptr< helloworld::IGreeterClient > client)
+  : camera_(std::move(camera))
+  , client_(std::move(client)) {
 }
 
 void MainLoop::draw(const std::shared_ptr< Context > & context) {
@@ -217,6 +220,13 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
     if (ImGui::Button("Turn on", ImVec2(-1.0f, 0.0f))) {
         SPDLOG_INFO("mainLoopStep: %s", "Open Camera");
         camera_->openCamera();
+    }
+    static std::string name;
+    name.reserve(100);
+    ImGui::InputText("name", name.data(), 100);
+    if (ImGui::Button("SEND")) {
+        SPDLOG_INFO("mainLoopStep: %s", "SENDED");
+        client_->SayHello(name);
     }
     // ImGui::PopItemWidth();
     ImGui::End();

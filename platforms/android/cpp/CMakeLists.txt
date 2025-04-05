@@ -11,6 +11,7 @@ LIBS(
   android-cxx-jni-camera_sink
   android-cxx-main_activity
   common-main_loop
+  common-client
 
   android
 )

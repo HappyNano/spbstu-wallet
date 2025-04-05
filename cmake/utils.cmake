@@ -91,6 +91,15 @@ function(generate_protobuf_sources PROTO_FILE)
       --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
       ${PROTO_FILE}
     )
+    # add_custom_command(
+    #   OUTPUT ${PROTO_SRCS} ${PROTO_HDRS}
+    #   COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+    #   ARGS  --proto_path=${PROTO_DIR}
+    #         --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+    #         --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+    #         --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
+    #   DEPENDS ${PROTO_FILE}
+    # )
   else()
     set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc")
     set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h")
@@ -101,6 +110,23 @@ function(generate_protobuf_sources PROTO_FILE)
       ${PROTO_FILE}
     )
   endif()
+
+  set(PROTO_GET_TARGET_NAME proto_gntr_${PROTO_DIR_REL_NAME}_${PROTO_NAME}) # proto_gen-target
+  add_custom_target(${PROTO_GET_TARGET_NAME} DEPENDS ${PROTO_FILE})
+
+  set(SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
+  set_source_files_properties(${SOURCES} PROPERTIES GENERATED TRUE)
+
+  set(LIBRARY_NAME lib_${PROTO_DIR_REL_NAME}_${PROTO_NAME})
+  add_library(${LIBRARY_NAME} INTERFACE)
+  target_sources(${LIBRARY_NAME} PUBLIC ${SOURCES})
+  add_dependencies(${LIBRARY_NAME} ${PROTO_GET_TARGET_NAME})
+
+  set(LIBRARIES protobuf::libprotobuf-lite)
+  if(PROTO_PRAM STREQUAL "GRPC")
+    list(APPEND LIBRARIES gRPC::grpc++)
+  endif()
+  target_link_libraries(${LIBRARY_NAME} INTERFACE ${LIBRARIES})
 
   set(proto_srcs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_SRCS} CACHE PATH SRCS)
   set(proto_hdrs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_HDRS} CACHE PATH HDRS)
