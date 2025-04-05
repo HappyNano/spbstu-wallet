@@ -21,7 +21,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS Off)
-set(CMAKE_CXX_CLANG_TIDY clang-tidy --config-file=${PROJECT_SOURCE_DIR}/.clang-tidy)
+set(CMAKE_CXX_CLANG_TIDY clang-tidy-19 --config-file=${PROJECT_SOURCE_DIR}/.clang-tidy)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -41,9 +41,12 @@ find_package(nlohmann_json REQUIRED)
 find_package(imgui REQUIRED)
 find_package(Stb REQUIRED)
 find_package(OpenCV 4 REQUIRED)
+find_package(Protobuf REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_subdirectory(utils)
 add_subdirectory(wallet)
+add_subdirectory(proto)
+add_subdirectory(backend)
 add_subdirectory(platforms)

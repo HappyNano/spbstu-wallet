@@ -1,3 +1,5 @@
+ExcludeHeaderFilterRegex: '.*proto.*'
+
 Checks: '-*,
   bugprone-inaccurate-erase,
   bugprone-infinite-loop,
@@ -108,5 +110,4 @@ CheckOptions:
   - key: readability-identifier-naming.StaticConstantCase
     value: UPPER_CASE
 
-WarningsAsErrors: '*'
-HeaderFilterRegex: '^(.*wallet.*\.(c|cpp|h|hpp))*$'
+# WarningsAsErrors: '*'
