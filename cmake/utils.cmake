@@ -122,10 +122,11 @@ function(generate_protobuf_sources PROTO_FILE)
   target_sources(${LIBRARY_NAME} PUBLIC ${SOURCES})
   add_dependencies(${LIBRARY_NAME} ${PROTO_GET_TARGET_NAME})
 
-  set(LIBRARIES protobuf::libprotobuf-lite)
+  set(LIBRARIES )
   if(PROTO_PRAM STREQUAL "GRPC")
-    list(APPEND LIBRARIES gRPC::grpc++)
+    set(LIBRARIES gRPC::grpc++)
   endif()
+  list(APPEND LIBRARIES protobuf::libprotobuf-lite) # !!! PROTO after grpc
   target_link_libraries(${LIBRARY_NAME} INTERFACE ${LIBRARIES})
 
   set(proto_srcs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_SRCS} CACHE PATH SRCS)

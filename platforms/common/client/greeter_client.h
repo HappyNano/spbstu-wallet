@@ -13,7 +13,7 @@ namespace helloworld {
     class GreeterClient: public IGreeterClient {
     public:
         GreeterClient(std::shared_ptr< grpc::Channel > channel);
-        ~GreeterClient() override;
+        ~GreeterClient() override = default;
 
         // Assembles the client's payload, sends it and presents the response back
         // from the server.

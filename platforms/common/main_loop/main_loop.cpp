@@ -224,9 +224,12 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
     static std::string name;
     name.reserve(100);
     ImGui::InputText("name", name.data(), 100);
+    ImGui::Text("name is %s", name.c_str());
+    static std::string response;
+    ImGui::Text("last_response %s", response.c_str());
     if (ImGui::Button("SEND")) {
         SPDLOG_INFO("mainLoopStep: %s", "SENDED");
-        client_->SayHello(name);
+        response = client_->SayHello(name);
     }
     // ImGui::PopItemWidth();
     ImGui::End();
