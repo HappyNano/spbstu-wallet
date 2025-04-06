@@ -45,6 +45,10 @@ find_package(Stb REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
 

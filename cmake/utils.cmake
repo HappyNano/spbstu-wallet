@@ -1,12 +1,16 @@
+macro(__RESET)
+  set(SOURCES )
+  set(LIBRARIES )
+  set(INCLUDEDIRECTORIES )
+endmacro()
+
 macro(EXECUTABLE)
   if(ARGC GREATER 1)
     message(FATAL_ERROR "Macro EXECUTABLE: Bad args")
   endif()
   set(SUIT "EXECUTABLE")
   set(EXECUTABLE_NAME ${ARGV0})
-  set(SOURCES )
-  set(LIBRARIES )
-  set(INCLUDEDIRECTORIES )
+  __RESET()
 endmacro()
 
 macro(LIBRARY)
@@ -16,9 +20,7 @@ macro(LIBRARY)
   set(SUIT "LIBRARY")
   set(LIBRARY_NAME ${ARGV0})
   set(LIBRARY_PARAM ${ARGV1})
-  set(SOURCES )
-  set(LIBRARIES )
-  set(INCLUDEDIRECTORIES )
+  __RESET()
 endmacro()
 
 macro(GTEST)
@@ -27,9 +29,7 @@ macro(GTEST)
   endif()
   set(SUIT "GTEST")
   set(GTEST_NAME ${ARGV0})
-  set(SOURCES )
-  set(LIBRARIES )
-  set(INCLUDEDIRECTORIES )
+  __RESET()
 endmacro()
 
 macro(PROTO)
@@ -38,22 +38,22 @@ macro(PROTO)
   endif()
   set(SUIT "PROTO")
   set(PROTO_PARAM ${ARGV0})
-  set(SOURCES )
+  __RESET()
 endmacro()
 
 macro(SRCS)
-  set(SOURCES ${ARGN})
+  list(APPEND SOURCES ${ARGN})
 endmacro()
 
 macro(LIBS)
-  set(LIBRARIES ${ARGN})
+  list(APPEND LIBRARIES ${ARGN})
 endmacro()
 
 macro(INCLUDEDIRS)
-  set(INCLUDEDIRECTORIES ${ARGN})
+  list(APPEND INCLUDEDIRECTORIES ${ARGN})
 endmacro()
 
-macro(PROTOS)
+macro(PROTOS_deprecated)
   foreach(PROTO_NAME ${ARGN})
     set(PROTO_SRCS proto_srcs_${PROTO_NAME})
     set(PROTO_HDRS proto_hdrs_${PROTO_NAME})
@@ -77,57 +77,51 @@ function(generate_protobuf_sources PROTO_FILE)
   cmake_path(RELATIVE_PATH PROTO_DIR BASE_DIRECTORY ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE PROTO_DIR_REL)
   string(REPLACE "\/" "_" PROTO_DIR_REL_NAME ${PROTO_DIR_REL})
 
+  set(LIBRARIES )
   if(PROTO_PARAM STREQUAL "GRPC")
+    list(APPEND LIBRARIES gRPC::grpc++)
+
     set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.cc")
     set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.h")
     set(PROTO_SRCS ${PROTO_SRCS} "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc")
     set(PROTO_HDRS ${PROTO_HDRS} "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h")
+    set(SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
+
     find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
-    execute_process(
+    add_custom_command(
+      OUTPUT ${SOURCES}
       COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-      --proto_path=${PROTO_DIR}
-      --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
-      --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-      --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
-      ${PROTO_FILE}
+      ARGS  --proto_path=${PROTO_DIR}
+            --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+            --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+            --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
+            ${PROTO_FILE}
+      DEPENDS ${PROTO_FILE}
+      COMMENT "Generating gRPC and Protobuf files for ${PROTO_NAME}"
+      VERBATIM
     )
-    # add_custom_command(
-    #   OUTPUT ${PROTO_SRCS} ${PROTO_HDRS}
-    #   COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-    #   ARGS  --proto_path=${PROTO_DIR}
-    #         --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
-    #         --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-    #         --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
-    #   DEPENDS ${PROTO_FILE}
-    # )
   else()
     set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.cc")
     set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.pb.h")
-    execute_process(
+    set(SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
+
+    add_custom_command(
+      OUTPUT ${SOURCES}
       COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-      --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-      --proto_path=${PROTO_DIR}
-      ${PROTO_FILE}
+      ARGS  --proto_path=${PROTO_DIR}
+            --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+            ${PROTO_FILE}
+      DEPENDS ${PROTO_FILE}
+      COMMENT "Generating Protobuf files for ${PROTO_NAME}"
+      VERBATIM
     )
   endif()
-
-  set(PROTO_GET_TARGET_NAME proto_gntr_${PROTO_DIR_REL_NAME}_${PROTO_NAME}) # proto_gen-target
-  add_custom_target(${PROTO_GET_TARGET_NAME} DEPENDS ${PROTO_FILE})
-
-  set(SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
-  set_source_files_properties(${SOURCES} PROPERTIES GENERATED TRUE)
+  list(APPEND LIBRARIES protobuf::libprotobuf-lite) # !!! PROTO after grpc
 
   set(LIBRARY_NAME lib_${PROTO_DIR_REL_NAME}_${PROTO_NAME})
-  add_library(${LIBRARY_NAME} INTERFACE)
-  target_sources(${LIBRARY_NAME} PUBLIC ${SOURCES})
-  add_dependencies(${LIBRARY_NAME} ${PROTO_GET_TARGET_NAME})
-
-  set(LIBRARIES )
-  if(PROTO_PRAM STREQUAL "GRPC")
-    set(LIBRARIES gRPC::grpc++)
-  endif()
-  list(APPEND LIBRARIES protobuf::libprotobuf-lite) # !!! PROTO after grpc
-  target_link_libraries(${LIBRARY_NAME} INTERFACE ${LIBRARIES})
+  add_library(${LIBRARY_NAME} SHARED ${SOURCES})
+  target_link_libraries(${LIBRARY_NAME} PUBLIC ${LIBRARIES})
+  target_include_directories(${LIBRARY_NAME} INTERFACE ${CMAKE_BINARY_DIR})
 
   set(proto_srcs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_SRCS} CACHE PATH SRCS)
   set(proto_hdrs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_HDRS} CACHE PATH HDRS)
