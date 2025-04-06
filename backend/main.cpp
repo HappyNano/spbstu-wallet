@@ -13,17 +13,6 @@
 
 #include <backend/database/postgres/psql_database.h>
 
-using databaseservice::Column;
-using databaseservice::CreateTableRequest;
-using databaseservice::DatabaseService;
-using databaseservice::DeleteRequest;
-using databaseservice::DropTableRequest;
-using databaseservice::InsertRequest;
-using databaseservice::Row;
-using databaseservice::SelectRequest;
-using databaseservice::SelectResponse;
-using databaseservice::StatusResponse;
-using databaseservice::UpdateRequest;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
