@@ -1,9 +1,15 @@
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <string>
 
 #include <grpcpp/grpcpp.h>
-#include <proto/database/database.grpc.pb.h>
+#include <proto/wallet/service.grpc.pb.h>
+
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/spdlog.h>
+
+#include <backend/database/postgres/psql_database.h>
 
 #include <backend/database/postgres/psql_database.h>
 
@@ -23,178 +29,154 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-class DatabaseServiceImpl final: public DatabaseService::Service {
+using receipt_scanner::QRCodeRequest;
+using receipt_scanner::ReceiptItem;
+using receipt_scanner::ReceiptResponse;
+using receipt_scanner::ReceiptScannerService;
+
+struct RetailerInfo {
+    std::string name;
+    std::string address;
+    std::vector< ReceiptItem > sample_items;
+};
+
+class ReceiptProcessor {
 public:
-    DatabaseServiceImpl() {
+    // Метод для разбора QR-кода чека
+    static std::unique_ptr< ReceiptResponse > ProcessQRCode(const std::string & qrCode) {
+        auto response = std::make_unique< ReceiptResponse >();
+
+        // Проверяем, что QR-код не пустой
+        if (qrCode.empty()) {
+            auto * error = response->mutable_error();
+            error->set_code(receipt_scanner::ErrorInfo_ErrorCode_PARSING_ERROR);
+            error->set_message("Empty QR code");
+            return response;
+        }
+
+        // Проверяем общий формат фискального QR-кода
+        std::regex fiscalQRRegex(
+         "t=\\d{8}T\\d{4}&" // Дата и время (t)
+         "s=\\d+\\.?\\d*&"  // Сумма (s)
+         "fn=\\d+&"         // Номер фискального накопителя (fn)
+         "i=\\d+&"          // Номер фискального документа (i)
+         "fp=\\d+&"         // Фискальный признак (fp)
+         "n=\\d+"           // Тип документа (n)
+        );
+
+        if (!std::regex_match(qrCode, fiscalQRRegex)) {
+            // Проверяем, содержит ли QR хотя бы какие-то параметры
+            std::regex paramRegex("([^=&]+)=([^=&]+)");
+            if (!std::regex_search(qrCode, paramRegex)) {
+                auto * error = response->mutable_error();
+                error->set_code(receipt_scanner::ErrorInfo_ErrorCode_UNKNOWN_RECEIPT_FORMAT);
+                error->set_message("Invalid QR code format");
+                error->set_details("QR code doesn't match fiscal receipt pattern: " + qrCode);
+                return response;
+            }
+        }
+
+        // Парсим параметры QR-кода
+        std::map< std::string, std::string > params;
+        std::regex paramRegex("([^=&]+)=([^=&]+)");
+        auto paramBegin = std::sregex_iterator(qrCode.begin(), qrCode.end(), paramRegex);
+        auto paramEnd = std::sregex_iterator();
+
+        for (auto i = paramBegin; i != paramEnd; ++i) {
+            std::smatch match = *i;
+            params[match[1].str()] = match[2].str();
+        }
+
+        // Проверяем наличие всех необходимых полей
+        const std::vector< std::string > requiredFields = { "t", "s", "fn", "i", "fp", "n" };
+        std::vector< std::string > missingFields;
+
+        for (const auto & field: requiredFields) {
+            if (params.find(field) == params.end()) {
+                missingFields.push_back(field);
+            }
+        }
+
+        if (!missingFields.empty()) {
+            auto * error = response->mutable_error();
+            error->set_code(receipt_scanner::ErrorInfo_ErrorCode_PARSING_ERROR);
+            error->set_message("Missing required fields in QR code");
+
+            std::string details = "Missing fields: ";
+            for (size_t i = 0; i < missingFields.size(); ++i) {
+                details += missingFields[i];
+                if (i < missingFields.size() - 1) {
+                    details += ", ";
+                }
+            }
+            error->set_details(details);
+            return response;
+        }
+
+        // Проверка корректности полей
+        try {
+            // Проверка суммы
+            double amount = std::stod(params["s"]);
+            if (amount < 0) {
+                throw std::runtime_error("Invalid amount (s): " + params["s"]);
+            }
+
+            // Проверка типа документа
+            int docType = std::stoi(params["n"]);
+            if (docType < 1 || docType > 4) {
+                throw std::runtime_error("Invalid document type (n): " + params["n"]);
+            }
+
+            // Если все проверки прошли успешно, создаем ответ с данными чека
+            auto * receipt = response->mutable_receipt();
+
+            // Заполняем основные поля из QR-кода
+            receipt->set_t(params["t"]);
+            receipt->set_s(amount);
+            receipt->set_fn(params["fn"]);
+            receipt->set_i(params["i"]);
+            receipt->set_fp(params["fp"]);
+            receipt->set_n(docType);
+
+            // Устанавливаем способ оплаты
+            // receipt->set_payment_method(ReceiptData_PaymentMethod_PAYMENT_CARD);
+
+            // Добавляем дополнительную информацию
+            (*receipt->mutable_additional_info())["processed_at"] = std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
+
+        } catch (const std::exception & e) {
+            auto * error = response->mutable_error();
+            error->set_code(receipt_scanner::ErrorInfo_ErrorCode_PARSING_ERROR);
+            error->set_message("Error parsing QR code fields");
+            error->set_details(e.what());
+            return response;
+        }
+
+        return response;
+    }
+};
+
+// Реализация сервиса для сканирования чеков
+class ReceiptScannerServiceImpl final: public ReceiptScannerService::Service {
+public:
+    ReceiptScannerServiceImpl() {
         db_ = std::make_unique< cxx::PsqlDatabase >();
         db_->connect("dbname=wallet user=admin password=adminadmin host=10.129.0.5 port=5432");
     }
 
-    Status CreateTable(ServerContext * context, const CreateTableRequest * request, StatusResponse * response) override {
-        std::vector< cxx::Col > columns;
+    Status ProcessQRCode(ServerContext * /*context*/, const QRCodeRequest * request, ReceiptResponse * response) override {
+        SPDLOG_INFO("Received request from user: {} with QR code: {}", request->user_id(), request->qr_code_content());
 
-        // Преобразуем protobuf колонки в наш тип Col
-        for (const auto & col: request->columns()) {
-            cxx::Col column;
-            column.name = col.name();
+        db_->insert("receipts", { "qrdata" }, { request->qr_code_content() });
 
-            // Преобразуем тип данных
-            switch (col.type()) {
-            case Column::INTEGER:
-                column.type = cxx::Col::EDataType::INTEGER;
-                break;
-            case Column::REAL:
-                column.type = cxx::Col::EDataType::REAL;
-                break;
-            case Column::TEXT:
-                column.type = cxx::Col::EDataType::TEXT;
-                break;
-            case Column::BOOLEAN:
-                column.type = cxx::Col::EDataType::BOOLEAN;
-                break;
-            case Column::DATE:
-                column.type = cxx::Col::EDataType::DATE;
-                break;
-            case Column::TIMESTAMP:
-                column.type = cxx::Col::EDataType::TIMESTAMP;
-                break;
-            default:
-                column.type = cxx::Col::EDataType::TEXT;
-                break;
-            }
+        // Обрабатываем QR-код
+        auto processedResponse = ReceiptProcessor::ProcessQRCode(request->qr_code_content());
 
-            // Преобразуем ограничения
-            switch (col.constraint()) {
-            case Column::PRIMARY_KEY:
-                column.constraint = cxx::Col::EConstraint::PRIMARY_KEY;
-                break;
-            case Column::UNIQUE:
-                column.constraint = cxx::Col::EConstraint::UNIQUE;
-                break;
-            case Column::NOT_NULL:
-                column.constraint = cxx::Col::EConstraint::NOT_NULL;
-                break;
-            case Column::FOREIGN_KEY:
-                column.constraint = cxx::Col::EConstraint::FOREIGN_KEY;
-                break;
-            default:
-                column.constraint = cxx::Col::EConstraint::NONE;
-                break;
-            }
-
-            columns.push_back(column);
-        }
-
-        bool success = db_->createTable(request->table_name(), columns);
-
-        response->set_success(success);
-        if (success) {
-            response->set_message("Table created successfully");
+        // Копируем результат в ответ
+        if (processedResponse->has_receipt()) {
+            response->mutable_receipt()->CopyFrom(processedResponse->receipt());
         } else {
-            response->set_message("Failed to create table");
-        }
-
-        return Status::OK;
-    }
-
-    Status DropTable(ServerContext * context, const DropTableRequest * request, StatusResponse * response) override {
-        bool success = db_->dropTable(request->table_name());
-
-        response->set_success(success);
-        if (success) {
-            response->set_message("Table dropped successfully");
-        } else {
-            response->set_message("Failed to drop table");
-        }
-
-        return Status::OK;
-    }
-
-    Status SelectData(ServerContext * context, const SelectRequest * request, SelectResponse * response) override {
-        std::vector< std::string > columns;
-        for (const auto & col: request->column_names()) {
-            columns.push_back(col);
-        }
-
-        auto result = db_->select(request->table_name(), columns);
-
-        if (result) {
-            response->set_success(true);
-
-            // Преобразуем результаты в протобуферы
-            for (const auto & row_data: *result) {
-                Row * row = response->add_rows();
-
-                for (const auto & cell: row_data) {
-                    if (std::holds_alternative< std::string >(cell)) {
-                        row->add_values(std::get< std::string >(cell));
-                    } else if (std::holds_alternative< int >(cell)) {
-                        row->add_values(std::to_string(std::get< int >(cell)));
-                    } else if (std::holds_alternative< double >(cell)) {
-                        row->add_values(std::to_string(std::get< double >(cell)));
-                    } else if (std::holds_alternative< bool >(cell)) {
-                        row->add_values(std::get< bool >(cell) ? "true" : "false");
-                    }
-                }
-            }
-        } else {
-            response->set_success(false);
-            response->set_error_message("Failed to execute select query");
-        }
-
-        return Status::OK;
-    }
-
-    Status InsertData(ServerContext * context, const InsertRequest * request, StatusResponse * response) override {
-        std::vector< std::string > columns;
-        for (const auto & col: request->column_names()) {
-            columns.push_back(col);
-        }
-
-        std::vector< std::string > values;
-        for (const auto & val: request->values()) {
-            values.push_back(val);
-        }
-
-        bool success = db_->insert(request->table_name(), columns, values);
-
-        response->set_success(success);
-        if (success) {
-            response->set_message("Data inserted successfully");
-        } else {
-            response->set_message("Failed to insert data");
-        }
-
-        return Status::OK;
-    }
-
-    Status UpdateData(ServerContext * context, const UpdateRequest * request, StatusResponse * response) override {
-        std::vector< std::pair< std::string, std::string > > columnValuePairs;
-
-        for (const auto & col_val: request->column_values()) {
-            columnValuePairs.emplace_back(col_val.column_name(), col_val.value());
-        }
-
-        bool success = db_->update(request->table_name(), columnValuePairs, request->where_condition());
-
-        response->set_success(success);
-        if (success) {
-            response->set_message("Data updated successfully");
-        } else {
-            response->set_message("Failed to update data");
-        }
-
-        return Status::OK;
-    }
-
-    Status DeleteData(ServerContext * context, const DeleteRequest * request, StatusResponse * response) override {
-        bool success = db_->deleteFrom(request->table_name(), request->where_condition());
-
-        response->set_success(success);
-        if (success) {
-            response->set_message("Data deleted successfully");
-        } else {
-            response->set_message("Failed to delete data");
+            response->mutable_error()->CopyFrom(processedResponse->error());
         }
 
         return Status::OK;
@@ -204,21 +186,35 @@ private:
     std::unique_ptr< cxx::IDatabase > db_;
 };
 
-void RunServer() {
-    std::string server_address("0.0.0.0:50051");
-    DatabaseServiceImpl service;
+void runServer() {
+    std::string serverAddress("0.0.0.0:50051");
+    ReceiptScannerServiceImpl service;
 
     ServerBuilder builder;
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
 
     std::unique_ptr< Server > server(builder.BuildAndStart());
-    std::cout << "Server listening on " << server_address << std::endl;
+    std::cout << "Server listening on " << serverAddress << std::endl;
 
     server->Wait();
 }
 
-int main(int argc, char ** argv) {
-    RunServer();
+int main(int, char **) {
+    SPDLOG_INFO("Here1");
+    // Init logger
+    auto logger = spdlog::stdout_logger_mt("sdlmain");
+#ifndef NDEBUG
+    logger->set_level(spdlog::level::debug);
+#else
+    logger->set_level(spdlog::level::info);
+#endif
+    spdlog::set_default_logger(std::move(logger));
+    SPDLOG_INFO("Here2");
+
+    // Отключаем xDS клиент
+    setenv("GRPC_XDS_BOOTSTRAP", "{}", 1);
+    SPDLOG_INFO("Here3");
+    runServer();
     return 0;
 }
