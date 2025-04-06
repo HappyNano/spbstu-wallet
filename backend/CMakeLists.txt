@@ -5,7 +5,11 @@ SRCS(
 )
 
 LIBS(
-  lib_proto_helloworld_helloworld
+  lib_proto_database_database
+  database_postgres
+  spdlog::spdlog
 )
 
 END()
+
+add_subdirectory(database)

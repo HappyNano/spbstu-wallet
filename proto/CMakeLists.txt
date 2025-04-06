@@ -8,3 +8,4 @@ END()
 
 add_subdirectory(testdir)
 add_subdirectory(helloworld)
+add_subdirectory(database)
