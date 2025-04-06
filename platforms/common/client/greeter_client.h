@@ -1,25 +1,40 @@
 #pragma once
 
-#include "platforms/common/client/interface/i_greeter_client.h"
-#include <build/proto/helloworld/helloworld.grpc.pb.h>
-#include <grpcpp/grpcpp.h>
-
-#include <platforms/common/client/interface/i_greeter_client.h>
-
 #include <memory>
 #include <string>
+#include <vector>
 
-namespace helloworld {
-    class GreeterClient: public IGreeterClient {
-    public:
-        GreeterClient(std::shared_ptr< grpc::Channel > channel);
-        ~GreeterClient() override = default;
+#include <platforms/common/client/interface/i_greeter_client.h>
+#include <grpcpp/grpcpp.h>
+#include <proto/database/database.grpc.pb.h>
 
-        // Assembles the client's payload, sends it and presents the response back
-        // from the server.
-        std::string SayHello(const std::string & name) override;
+using databaseservice::Column;
+using databaseservice::CreateTableRequest;
+using databaseservice::DatabaseService;
+using databaseservice::DeleteRequest;
+using databaseservice::DropTableRequest;
+using databaseservice::InsertRequest;
+using databaseservice::Row;
+using databaseservice::SelectRequest;
+using databaseservice::SelectResponse;
+using databaseservice::StatusResponse;
+using databaseservice::UpdateRequest;
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
 
-    private:
-        std::unique_ptr< Greeter::Stub > stub_;
-    };
-} // namespace helloworld
+class DatabaseClient: public IDatabaseClient {
+public:
+    DatabaseClient(const std::shared_ptr< Channel > & channel);
+    ~DatabaseClient() override = default;
+
+    bool CreateTable(const std::string & table_name, const std::vector< std::pair< std::string, std::string > > & columns, bool primary_key_first = true) override;
+    bool DropTable(const std::string & table_name) override;
+    std::string SelectData(const std::string & table_name, const std::vector< std::string > & column_names = {}) override;
+    bool InsertData(const std::string & table_name, const std::vector< std::string > & column_names, const std::vector< std::string > & values) override;
+    bool UpdateData(const std::string & table_name, const std::vector< std::pair< std::string, std::string > > & column_values, const std::string & where_condition = "") override;
+    bool DeleteData(const std::string & table_name, const std::string & where_condition = "") override;
+
+private:
+    std::unique_ptr< DatabaseService::Stub > stub_;
+};

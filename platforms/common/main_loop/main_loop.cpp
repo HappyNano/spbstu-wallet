@@ -27,7 +27,7 @@ constexpr int cropSize = 256;
 
 MainLoop::MainLoop(
  std::shared_ptr< ICamera > camera,
- std::shared_ptr< helloworld::IGreeterClient > client)
+ std::shared_ptr< IDatabaseClient > client)
   : camera_(std::move(camera))
   , client_(std::move(client)) {
 }
@@ -205,13 +205,24 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cropSize, cropSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbMat(roi).clone().data);
         }
 
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - lastFrame->width * 1.5f) * 0.5f);
         ImVec2 p = ImGui::GetCursorScreenPos();
-        ImGui::Image(textureId, ImVec2(lastFrame->width, lastFrame->height));
-        ImGui::GetWindowDrawList()->AddImage(textureId2, ImVec2(p.x + offsetW, p.y + offsetH), ImVec2(p.x + offsetW + cropSize, p.y + offsetH + cropSize), ImVec2(0, 0), ImVec2(1, 1));
-        ImGui::GetWindowDrawList()->AddRect(ImVec2(p.x + offsetW, p.y + offsetH), ImVec2(p.x + offsetW + cropSize, p.y + offsetH + cropSize), ImColor(215, 215, 215), 0, 2.0f);
-        ImGui::Image(textureId2, ImVec2(cropSize, cropSize));
-        ImGui::Text("pointer = %x", textureId);
-        ImGui::Text("size = %d x %d", lastFrame->width, lastFrame->height);
+        ImGui::Image(textureId, ImVec2(lastFrame->width * 1.5f, lastFrame->height * 1.5f));
+        ImGui::GetWindowDrawList()->AddImage(
+         textureId2,
+         ImVec2(p.x + offsetW * 1.5, p.y + offsetH * 1.5),
+         ImVec2(p.x + offsetW * 1.5 + cropSize * 1.5, p.y + offsetH * 1.5 + cropSize * 1.5),
+         ImVec2(0, 0),
+         ImVec2(1, 1));
+        ImGui::GetWindowDrawList()->AddRect(
+         ImVec2(p.x + offsetW * 1.5, p.y + offsetH * 1.5),
+         ImVec2(p.x + offsetW * 1.5 + cropSize * 1.5, p.y + offsetH * 1.5 + cropSize * 1.5),
+         ImColor(215, 215, 215),
+         0,
+         2.0f);
+        // ImGui::Image(textureId2, ImVec2(cropSize, cropSize));
+        // ImGui::Text("pointer = %x", textureId);
+        // ImGui::Text("size = %d x %d", lastFrame->width, lastFrame->height);
     }
     // ImGui::PushItemWidth(-1.0f);
     if (ImGui::Button("Turn off", ImVec2(-1.0f, 0.0f))) {
@@ -223,13 +234,18 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
         camera_->openCamera();
     }
     static std::string name;
+    static int id = 0;
     ImGui::InputText("name", &name);
     ImGui::Text("name is %s", name.c_str());
     static std::string response;
     ImGui::Text("last_response %s", response.c_str());
     if (ImGui::Button("SEND")) {
         SPDLOG_INFO("mainLoopStep: %s", "SENDED");
-        response = client_->SayHello(name);
+        client_->InsertData("temp", { "id", "data" }, { std::to_string(id++), name });
+    }
+    if (ImGui::Button("GET")) {
+        SPDLOG_INFO("mainLoopStep: %s", "GETTED");
+        response = client_->SelectData("temp", { "id", "data" });
     }
     // ImGui::PopItemWidth();
     ImGui::End();

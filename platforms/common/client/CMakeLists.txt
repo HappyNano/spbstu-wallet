@@ -7,7 +7,7 @@ SRCS(
 
 LIBS(
   common-client_interface
-  lib_proto_helloworld_helloworld
+  lib_proto_database_database
   spdlog::spdlog
 )
 
