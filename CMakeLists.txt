@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
 
 if(PLATFORM STREQUAL "ANDROID")
+  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(FATAL_ERROR "Only Debug builds are supported")
+  endif()
   include(${CMAKE_SOURCE_DIR}/cmake/vcpkg_android.cmake)
   list(APPEND VCPKG_MANIFEST_FEATURES "android")  # Feature in vcpkg.json
 elseif(PLATFORM STREQUAL "LINUX" OR PLATFORM STREQUAL "WIN" OR PLATFORM STREQUAL "APPLE")

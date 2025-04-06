@@ -8,6 +8,7 @@
 #endif
 
 #include <imgui.h>
+#include <imgui_stdlib.h>
 #include <spdlog/spdlog.h>
 
 #include <opencv4/opencv2/core.hpp>
@@ -222,8 +223,7 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
         camera_->openCamera();
     }
     static std::string name;
-    name.reserve(100);
-    ImGui::InputText("name", name.data(), 100);
+    ImGui::InputText("name", &name);
     ImGui::Text("name is %s", name.c_str());
     static std::string response;
     ImGui::Text("last_response %s", response.c_str());

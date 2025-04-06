@@ -6,8 +6,9 @@ SRCS(
 )
 
 LIBS(
-  lib_proto_helloworld_helloworld
   common-client_interface
+  lib_proto_helloworld_helloworld
+  spdlog::spdlog
 )
 
 END()

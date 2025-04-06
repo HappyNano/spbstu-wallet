@@ -1,6 +1,8 @@
 #include "greeter_client.h"
 #include <grpcpp/grpcpp.h>
 
+#include <spdlog/spdlog.h>
+
 namespace helloworld {
 
     GreeterClient::GreeterClient(std::shared_ptr< grpc::Channel > channel)

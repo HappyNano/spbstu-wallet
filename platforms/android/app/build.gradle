@@ -27,12 +27,12 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             externalNativeBuild {
                 cmake {
-                    targets "android-lib"
+                    arguments "-DCMAKE_BUILD_TYPE=Debug"
                 }
             }
         }
@@ -51,6 +51,11 @@ android {
         cmake {
             path "../../../CMakeLists.txt"
         }
+    }
+
+    packagingOptions {
+        exclude "**/*RelWithDebInfo*/**"
+        exclude "**/*Release*/**"
     }
 }
 

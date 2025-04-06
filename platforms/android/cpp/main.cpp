@@ -5,7 +5,6 @@
 #include <platforms/android/cpp/main_activity/android_main_activity.h>
 #include <platforms/common/client/greeter_client.h>
 
-
 namespace {
     constexpr auto BACKGROUD_COLOR = ImVec4(217 / 255.f, 219 / 255.f, 218 / 255.f, 1.0f);
 } // unnamed namespace
