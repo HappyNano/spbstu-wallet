@@ -14,6 +14,7 @@ LIBS(
   common-client
 
   android
+  spdlog::spdlog
 )
 
 INCLUDEDIRS(
