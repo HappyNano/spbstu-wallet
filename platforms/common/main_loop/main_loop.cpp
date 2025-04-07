@@ -1,4 +1,5 @@
 #include "main_loop.h"
+#include "platforms/common/client/interface/i_greeter_client.h"
 
 // include for android build
 #ifdef __ANDROID__
@@ -27,55 +28,12 @@ constexpr int cropSize = 256;
 
 MainLoop::MainLoop(
  std::shared_ptr< ICamera > camera,
- std::shared_ptr< IDatabaseClient > client)
+ std::shared_ptr< IReceiptScannerClient > client)
   : camera_(std::move(camera))
   , client_(std::move(client)) {
 }
 
 void MainLoop::draw(const std::shared_ptr< Context > & context) {
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (false && showDemoWindow_) { // NOLINT
-        ImGui::ShowDemoWindow(&showDemoWindow_);
-    }
-
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-    if (false) // NOLINT
-    {
-        static float f = 0.0f;
-        static int counter = 0;
-
-        ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
-
-        ImGui::Text("This is some useful text.");         // Display some text (you can use a format strings too)
-        ImGui::Checkbox("Demo Window", &showDemoWindow_); // Edit bools storing our window open/close state
-        ImGui::Checkbox("Another Window", &showAnotherWindow_);
-        // ImGui::Checkbox("Camera", &showCamera);
-
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("clear color", (float *)&clearColor_); // Edit 3 floats representing a color
-
-        if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-        {
-            counter++;
-        }
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
-
-        // ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        ImGui::End();
-    }
-
-    // 3. Show another simple window.
-    if (false && showAnotherWindow_) // NOLINT
-    {
-        ImGui::Begin("Another Window", &showAnotherWindow_); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me")) {
-            showAnotherWindow_ = false;
-        }
-        ImGui::End();
-    }
-
     static GLuint textureId = 0;
     static GLuint textureId2 = 0;
     if (!textureId) {
@@ -106,9 +64,12 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
     ImGui::PopStyleColor();
 
     ImGui::Text("Hello from another window!");
-    static bool rotateImg = true;
-    ImGui::Checkbox("Rotate", &rotateImg);
-    if (auto lastFrame = camera_->lastFrame(); lastFrame && textureId) {
+    static bool getResponse = false;
+    static bool showCamera = true;
+    static IReceiptScannerClient::Response lastResponse;
+    if (auto lastFrame = camera_->lastFrame(); showCamera && lastFrame && textureId) {
+        static bool rotateImg = true;
+        ImGui::Checkbox("Rotate", &rotateImg);
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -155,6 +116,11 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
             std::lock_guard< std::mutex > lock(mutex);
             ImGui::Text("detectionResult = %i", lastBool);
             ImGui::Text("Result = \'%s\'", lastResult.c_str());
+            if (!lastResult.empty()) {
+                lastResponse = client_->ProcessQRCode("testuser", lastResult);
+                showCamera = false;
+                getResponse = true;
+            }
         }
 
         const int cropSize = 256;
@@ -220,32 +186,32 @@ void MainLoop::draw(const std::shared_ptr< Context > & context) {
          ImColor(215, 215, 215),
          0,
          2.0f);
-        // ImGui::Image(textureId2, ImVec2(cropSize, cropSize));
-        // ImGui::Text("pointer = %x", textureId);
-        // ImGui::Text("size = %d x %d", lastFrame->width, lastFrame->height);
     }
-    // ImGui::PushItemWidth(-1.0f);
+
+    if (getResponse) {
+        if (!lastResponse.error.empty()) {
+            ImGui::Text("Error: %s", lastResponse.error.c_str());
+        } else {
+            ImGui::Text("t = %s", lastResponse.t.c_str());
+            ImGui::Text("s = %f", lastResponse.s);
+            ImGui::Text("fn = %s", lastResponse.fn.c_str());
+            ImGui::Text("i = %s", lastResponse.i.c_str());
+            ImGui::Text("fp = %s", lastResponse.fp.c_str());
+            ImGui::Text("n = %d", lastResponse.n);
+        }
+    }
+
     if (ImGui::Button("Turn off", ImVec2(-1.0f, 0.0f))) {
         SPDLOG_INFO("mainLoopStep: %s", "Close Camera");
         camera_->closeCamera();
+        showCamera = false;
     }
     if (ImGui::Button("Turn on", ImVec2(-1.0f, 0.0f))) {
         SPDLOG_INFO("mainLoopStep: %s", "Open Camera");
         camera_->openCamera();
-    }
-    static std::string name;
-    static int id = 0;
-    ImGui::InputText("name", &name);
-    ImGui::Text("name is %s", name.c_str());
-    static std::string response;
-    ImGui::Text("last_response %s", response.c_str());
-    if (ImGui::Button("SEND")) {
-        SPDLOG_INFO("mainLoopStep: %s", "SENDED");
-        client_->InsertData("temp", { "id", "data" }, { std::to_string(id++), name });
-    }
-    if (ImGui::Button("GET")) {
-        SPDLOG_INFO("mainLoopStep: %s", "GETTED");
-        response = client_->SelectData("temp", { "id", "data" });
+        showCamera = true;
+        getResponse = false;
+        lastResult.clear();
     }
     // ImGui::PopItemWidth();
     ImGui::End();

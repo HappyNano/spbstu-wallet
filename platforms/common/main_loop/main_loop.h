@@ -15,14 +15,14 @@ namespace cxx {
     public:
         explicit MainLoop(
          std::shared_ptr< ICamera > camera,
-         std::shared_ptr< IDatabaseClient > client);
+         std::shared_ptr< IReceiptScannerClient > client);
         ~MainLoop() = default;
 
         void draw(const std::shared_ptr< Context > & context);
 
     private:
         const std::shared_ptr< ICamera > camera_;
-        const std::shared_ptr< IDatabaseClient > client_;
+        const std::shared_ptr< IReceiptScannerClient > client_;
 
         // State settings
         bool fff_ = true;

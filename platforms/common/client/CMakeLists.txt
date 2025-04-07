@@ -7,7 +7,7 @@ SRCS(
 
 LIBS(
   common-client_interface
-  lib_proto_database_database
+  lib_proto_wallet_service
   spdlog::spdlog
 )
 

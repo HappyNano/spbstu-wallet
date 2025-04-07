@@ -25,7 +25,7 @@ extern "C"
         auto channel = grpc::CreateChannel(
          "89.169.173.97:50051",
          grpc::InsecureChannelCredentials());
-        auto client = std::make_shared< DatabaseClient >(channel);
+        auto client = std::make_shared< ReceiptScannerClient >(channel);
 
         auto mainLoop = std::make_unique< cxx::MainLoop >(
          camera,
