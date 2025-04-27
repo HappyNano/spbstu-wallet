@@ -6,6 +6,7 @@ SRCS(
 
 LIBS(
   lib_proto_wallet_service
+  backend_service
   database_postgres
   spdlog::spdlog
 )
@@ -13,3 +14,5 @@ LIBS(
 END()
 
 add_subdirectory(database)
+add_subdirectory(receipt)
+add_subdirectory(service)

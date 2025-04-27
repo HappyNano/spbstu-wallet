@@ -5,6 +5,16 @@
 
 using namespace cxx;
 
+std::string PsqlDatabase::ConnectionInfo::toString() const {
+    std::stringstream ss;
+    ss << "dbname=" << dbname << ' ';
+    ss << "user=" << user << ' ';
+    ss << "password=" << password << ' ';
+    ss << "host=" << host << ' ';
+    ss << "port=" << port;
+    return ss.str();
+}
+
 PsqlDatabase::PsqlDatabase()
   : isConnected_(false) {
 }
@@ -13,9 +23,13 @@ PsqlDatabase::~PsqlDatabase() {
     disconnect();
 }
 
-bool PsqlDatabase::connect(const std::string & connection_string) {
+bool PsqlDatabase::connect(const ConnectionInfo & connectionInfo) {
+    return connect(connectionInfo.toString());
+}
+
+bool PsqlDatabase::connect(const std::string & connectionString) {
     try {
-        conn_ = std::make_unique< pqxx::connection >(connection_string);
+        conn_ = std::make_unique< pqxx::connection >(connectionString);
         isConnected_ = conn_->is_open();
         return isConnected_;
     } catch (const std::exception & e) {

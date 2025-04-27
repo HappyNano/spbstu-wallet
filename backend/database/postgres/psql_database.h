@@ -9,12 +9,24 @@
 
 namespace cxx {
 
-    class PsqlDatabase: public IDatabase {
+    class PsqlDatabase final: public IDatabase {
+    public:
+        struct ConnectionInfo {
+            std::string dbname;
+            std::string user;
+            std::string password;
+            std::string host;
+            std::string port;
+
+            std::string toString() const;
+        };
+
     public:
         PsqlDatabase();
         ~PsqlDatabase() override;
 
-        bool connect(const std::string & connection_string) override;
+        bool connect(const ConnectionInfo & connectionInfo);
+        bool connect(const std::string & connectionString) override;
         void disconnect() override;
         bool createTable(const std::string & name, const std::vector< Col > & cols) override;
         bool dropTable(const std::string & tableName) override;
