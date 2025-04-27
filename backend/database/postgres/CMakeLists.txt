@@ -6,7 +6,7 @@ SRCS(
 )
 
 LIBS(
-  database_interface
+  database_base
   libpqxx::pqxx
   spdlog::spdlog
 )

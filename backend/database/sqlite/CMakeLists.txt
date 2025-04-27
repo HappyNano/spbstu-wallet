@@ -6,8 +6,11 @@ SRCS(
 )
 
 LIBS(
-  database_interface
+  database_base
+  unofficial::sqlite3::sqlite3
   spdlog::spdlog
 )
 
 END()
+
+ADD_TESTS(tests)

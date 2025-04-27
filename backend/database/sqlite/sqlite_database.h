@@ -2,44 +2,31 @@
 
 #include <sqlite3.h>
 
-#include <backend/database/interface/i_database.h>
-
-#include <string>
+#include <backend/database/base/base_database.h>
 
 namespace cxx {
 
-    class SQLiteDatabase final: public IDatabase {
+    class SQLiteDatabase final: public BaseDatabase {
     public:
-        struct ConnectionInfo {
-            std::string dbname;
-            std::string user;
-            std::string password;
-            std::string host;
-            std::string port;
-
-            std::string toString() const;
-        };
+        struct InMemory {};
 
     public:
-        SQLiteDatabase();
+        SQLiteDatabase() = default;
         ~SQLiteDatabase() override;
 
-        bool connect(const ConnectionInfo & connectionInfo);
-        bool connect(const std::string & connectionString) override;
+        bool connect(const InMemory & connectionInfo);
+        bool connect(const std::string & connectionInfo) override;
         void disconnect() override;
-        bool createTable(const std::string & name, const std::vector< Col > & cols) override;
-        bool dropTable(const std::string & tableName) override;
-        std::optional< QueryResult > select(const std::string & fromTableName, const std::vector< std::string > & colsName) override;
-        bool insert(const std::string & tableName, const std::vector< std::string > & colNames, const std::vector< std::string > & values) override;
-        bool update(const std::string & tableName, const std::vector< std::pair< std::string, std::string > > & colValuePairs, const std::string & whereCondition) override;
-        bool deleteFrom(const std::string & tableName, const std::string & whereCondition) override;
         std::optional< QueryResult > executeQuery(const std::string & query) override;
 
-    private:
-        sqlite3* conn_;
-        bool isConnected_;
+        bool isReady() const noexcept override;
 
-        static std::string escapeString(const std::string & str);
+    private:
+        bool connectImpl(const std::variant< std::string, InMemory > & connectionInfo);
+        std::string escapeString(const std::string & str) override;
+
+    private:
+        sqlite3 * conn_ = nullptr;
     };
 
 } // namespace cxx

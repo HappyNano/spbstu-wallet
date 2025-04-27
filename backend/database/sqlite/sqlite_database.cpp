@@ -1,262 +1,130 @@
 #include "sqlite_database.h"
 
 #include <spdlog/spdlog.h>
-#include <sstream>
 
 using namespace cxx;
 
-std::string SQLiteDatabase::ConnectionInfo::toString() const {
-    std::stringstream ss;
-    ss << "dbname=" << dbname << ' ';
-    ss << "user=" << user << ' ';
-    ss << "password=" << password << ' ';
-    ss << "host=" << host << ' ';
-    ss << "port=" << port;
-    return ss.str();
-}
-
-SQLiteDatabase::SQLiteDatabase()
-  : isConnected_(false) {
-}
-
 SQLiteDatabase::~SQLiteDatabase() {
     disconnect();
+};
+
+bool SQLiteDatabase::connect(const InMemory & connectionInfo) {
+    return connectImpl(connectionInfo);
 }
 
-bool SQLiteDatabase::connect(const ConnectionInfo & connectionInfo) {
-    return connect(connectionInfo.toString());
-}
-
-bool SQLiteDatabase::connect(const std::string & connectionString) {
-    int rc = sqlite3_open(connectionString.c_str(), &conn_);
-    isConnected_ = (rc == SQLITE_OK);
-    if (!isConnected_) {
-        SPDLOG_ERROR("Error opening SQLite database: {}", sqlite3_errmsg(conn_));
-        sqlite3_close(conn_);
-        conn_ = nullptr;
-    }
-    return isConnected_;
+bool SQLiteDatabase::connect(const std::string & connectionInfo) {
+    return connectImpl(connectionInfo);
 }
 
 void SQLiteDatabase::disconnect() {
-    SPDLOG_DEBUG("Disconnecting database");
-    if (conn_ && isConnected_) {
+    if (conn_) {
         sqlite3_close(conn_);
         conn_ = nullptr;
-        isConnected_ = false;
-    }
-}
-
-bool SQLiteDatabase::createTable(const std::string & name, const std::vector< Col > & cols) {
-    SPDLOG_DEBUG("Creating table");
-    if (!isConnected_ || !conn_) {
-        return false;
-    }
-
-    std::stringstream query;
-    query << "CREATE TABLE " << escapeString(name) << " (";
-
-    for (size_t i = 0; i < cols.size(); ++i) {
-        const auto & col = cols[i];
-        query << escapeString(col.name) << " " << dataTypeToSql(col.type);
-
-        if (col.constraint != Col::EConstraint::NONE) {
-            query << " " << constraintToSql(col.constraint);
-        }
-
-        if (i < cols.size() - 1) {
-            query << ", ";
-        }
-    }
-
-    query << ");";
-
-    try {
-        pqxx::work txn(*conn_);
-        txn.exec(query.str());
-        txn.commit();
-        return true;
-    } catch (const std::exception & e) {
-        SPDLOG_ERROR("Error creating table: {}", e.what());
-        return false;
-    }
-}
-
-bool SQLiteDatabase::dropTable(const std::string & tableName) {
-    if (!isConnected_ || !conn_) {
-        return false;
-    }
-
-    try {
-        pqxx::work txn(*conn_);
-        txn.exec("DROP TABLE IF EXISTS " + tableName);
-        txn.commit();
-        return true;
-    } catch (const std::exception & e) {
-        SPDLOG_ERROR("Error dropping table: {}", e.what());
-        return false;
-    }
-}
-
-std::optional< QueryResult > SQLiteDatabase::select(const std::string & fromTableName, const std::vector< std::string > & colsName) {
-    if (!isConnected_ || !conn_) {
-        return std::nullopt;
-    }
-
-    std::stringstream query;
-    query << "SELECT ";
-
-    if (colsName.empty()) {
-        query << "*";
-    } else {
-        for (size_t i = 0; i < colsName.size(); ++i) {
-            query << escapeString(colsName[i]);
-            if (i < colsName.size() - 1) {
-                query << ", ";
-            }
-        }
-    }
-
-    query << " FROM " << escapeString(fromTableName) << ";";
-
-    return executeQuery(query.str());
-}
-
-bool SQLiteDatabase::insert(const std::string & tableName, const std::vector< std::string > & colNames, const std::vector< std::string > & values) {
-    if (!isConnected_ || !conn_) {
-        return false;
-    }
-    if (colNames.size() != values.size()) {
-        return false;
-    }
-
-    std::stringstream query;
-    query << "INSERT INTO " << escapeString(tableName) << " (";
-
-    for (size_t i = 0; i < colNames.size(); ++i) {
-        query << escapeString(colNames[i]);
-        if (i < colNames.size() - 1) {
-            query << ", ";
-        }
-    }
-
-    query << ") VALUES (";
-
-    for (size_t i = 0; i < values.size(); ++i) {
-        query << "'" << escapeString(values[i]) << "'";
-        if (i < values.size() - 1) {
-            query << ", ";
-        }
-    }
-
-    query << ");";
-
-    try {
-        pqxx::work txn(*conn_);
-        txn.exec(query.str());
-        txn.commit();
-        return true;
-    } catch (const std::exception & e) {
-        SPDLOG_ERROR("Error inserting data: {}", e.what());
-        return false;
-    }
-}
-
-bool SQLiteDatabase::update(const std::string & tableName, const std::vector< std::pair< std::string, std::string > > & colValuePairs, const std::string & whereCondition) {
-    if (!isConnected_ || !conn_) {
-        return false;
-    }
-    if (colValuePairs.empty()) {
-        return false;
-    }
-
-    std::stringstream query;
-    query << "UPDATE " << escapeString(tableName) << " SET ";
-
-    for (size_t i = 0; i < colValuePairs.size(); ++i) {
-        query << escapeString(colValuePairs[i].first) << " = '" << escapeString(colValuePairs[i].second) << "'";
-        if (i < colValuePairs.size() - 1) {
-            query << ", ";
-        }
-    }
-
-    if (!whereCondition.empty()) {
-        query << " WHERE " << whereCondition;
-    }
-
-    query << ";";
-
-    try {
-        pqxx::work txn(*conn_);
-        txn.exec(query.str());
-        txn.commit();
-        return true;
-    } catch (const std::exception & e) {
-        SPDLOG_ERROR("Error updating data: {}", e.what());
-        return false;
-    }
-}
-
-bool SQLiteDatabase::deleteFrom(const std::string & tableName, const std::string & whereCondition) {
-    if (!isConnected_ || !conn_) {
-        return false;
-    }
-
-    std::stringstream query;
-    query << "DELETE FROM " << escapeString(tableName);
-
-    if (!whereCondition.empty()) {
-        query << " WHERE " << whereCondition;
-    }
-
-    query << ";";
-
-    try {
-        pqxx::work txn(*conn_);
-        txn.exec(query.str());
-        txn.commit();
-        return true;
-    } catch (const std::exception & e) {
-        SPDLOG_ERROR("Error deleting data: {}", e.what());
-        return false;
     }
 }
 
 std::optional< QueryResult > SQLiteDatabase::executeQuery(const std::string & query) {
-    if (!isConnected_ || !conn_) {
+    sqlite3_stmt * stmt = nullptr;
+    int rc = sqlite3_prepare_v2(conn_, query.c_str(), -1, &stmt, nullptr);
+
+    if (rc != SQLITE_OK) {
+        SPDLOG_ERROR("SQLite prepare error: {}", sqlite3_errmsg(conn_));
         return std::nullopt;
     }
 
-    try {
-        pqxx::work txn(*conn_);
-        pqxx::result result = txn.exec(query);
-        txn.commit();
+    QueryResult result;
+    int columnCount = sqlite3_column_count(stmt);
 
-        QueryResult queryResult;
-        for (const auto & row: result) {
-            std::vector< std::variant< int, double, std::string, bool > > rowData;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        std::vector< std::variant< int, double, std::string, bool > > row;
+        row.reserve(columnCount);
 
-            for (auto field = 0; field < row.size(); ++field) {
-                if (row[field].is_null()) {
-                    rowData.push_back(std::string("NULL"));
+        for (int i = 0; i < columnCount; ++i) {
+            int type = sqlite3_column_type(stmt, i);
+
+            switch (type) {
+            case SQLITE_INTEGER: {
+                int val = sqlite3_column_int(stmt, i);
+                // Если это булевское значение (0 или 1)
+                if (std::string(sqlite3_column_decltype(stmt, i) ? sqlite3_column_decltype(stmt, i) : "") == "BOOLEAN") {
+                    row.push_back(val != 0);
                 } else {
-                    // Для упрощения, возвращаем все как строки
-                    rowData.push_back(std::string(row[field].c_str()));
+                    row.push_back(val);
                 }
+                break;
             }
-
-            queryResult.push_back(rowData);
+            case SQLITE_FLOAT: {
+                double val = sqlite3_column_double(stmt, i);
+                row.push_back(val);
+                break;
+            }
+            case SQLITE_TEXT: {
+                const char * text = reinterpret_cast< const char * >(sqlite3_column_text(stmt, i));
+                row.push_back(std::string(text));
+                break;
+            }
+            case SQLITE_NULL: {
+                // По умолчанию используем строку для NULL значений
+                row.push_back(std::string(""));
+                break;
+            }
+            default: {
+                // Для неизвестных типов также используем строку
+                row.push_back(std::string(""));
+                break;
+            }
+            }
         }
+        result.push_back(std::move(row));
+    }
 
-        return queryResult;
-    } catch (const std::exception & e) {
-        SPDLOG_ERROR("Query execution error: {}", e.what());
+    sqlite3_finalize(stmt);
+
+    if (rc != SQLITE_DONE) {
+        SPDLOG_ERROR("SQLite step error: {}", sqlite3_errmsg(conn_));
         return std::nullopt;
     }
+
+    return result;
+}
+
+bool SQLiteDatabase::isReady() const noexcept {
+    return conn_;
+}
+
+bool SQLiteDatabase::connectImpl(const std::variant< std::string, InMemory > & connectionInfo) {
+    if (conn_) {
+        disconnect();
+    }
+
+    int rc;
+    if (std::holds_alternative< InMemory >(connectionInfo)) {
+        // Создаем in-memory базу данных
+        rc = sqlite3_open(":memory:", &conn_);
+    } else {
+        // Подключаемся к файловой базе данных
+        const auto & path = std::get< std::string >(connectionInfo);
+        rc = sqlite3_open(path.c_str(), &conn_);
+    }
+
+    if (rc != SQLITE_OK) {
+        if (conn_) {
+            SPDLOG_ERROR("SQLite error: {}", sqlite3_errmsg(conn_));
+            sqlite3_close(conn_);
+            conn_ = nullptr;
+        } else {
+            SPDLOG_ERROR("SQLite error: Unable to allocate memory for database connection");
+        }
+        return false;
+    }
+
+    return true;
 }
 
 std::string SQLiteDatabase::escapeString(const std::string & str) {
     std::string result;
+    result.reserve(str.size() * 2);
+
     for (char c: str) {
         if (c == '\'') {
             result += "''";
@@ -264,5 +132,6 @@ std::string SQLiteDatabase::escapeString(const std::string & str) {
             result += c;
         }
     }
+
     return result;
 }

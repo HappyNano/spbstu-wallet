@@ -52,7 +52,7 @@
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "PLATFORM": "BACKEND",
-        "BUILD_TESTING": false,
+        "BUILD_TESTING": true,
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
