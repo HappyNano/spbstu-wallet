@@ -12,7 +12,9 @@
     "stb",
     "opencv4",
     "protobuf",
-    "grpc"
+    "grpc",
+    "sqlite3",
+    "libpqxx"
   ],
   "features": {
     "android": {
@@ -40,8 +42,6 @@
     "backend": {
       "description": "Dependencies needed for the Backend Server building",
       "dependencies": [
-        "sqlite3",
-        "libpqxx"
       ]
     }
   }

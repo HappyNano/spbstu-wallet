@@ -1,4 +1,4 @@
-#include <backend/database/sqlite/sqlite_database.h>
+#include <utils/database/sqlite/sqlite_database.h>
 
 #include <gtest/gtest.h>
 
