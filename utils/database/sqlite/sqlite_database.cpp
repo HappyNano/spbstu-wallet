@@ -23,7 +23,7 @@ void SQLiteDatabase::disconnect() {
     }
 }
 
-std::optional< QueryResult > SQLiteDatabase::executeQuery(const std::string & query) {
+std::optional< QueryResult > SQLiteDatabase::executeQueryUnsafe(const std::string & query) {
     sqlite3_stmt * stmt = nullptr;
     int rc = sqlite3_prepare_v2(conn_, query.c_str(), -1, &stmt, nullptr);
 
@@ -134,4 +134,14 @@ std::string SQLiteDatabase::escapeString(const std::string & str) {
     }
 
     return result;
+}
+
+bool SQLiteDatabase::isTableExist(const std::string & tableName) {
+    std::stringstream query;
+    query << "SELECT name FROM sqlite_master WHERE type='table' AND name='";
+    query << escapeString(tableName);
+    query << "';";
+
+    auto result = executeQuery(query.str());
+    return result.has_value() && !result->empty();
 }

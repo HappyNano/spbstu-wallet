@@ -48,9 +48,7 @@ TEST_F(SQLiteDatabaseTest, ConnectFile) {
 }
 
 TEST_F(SQLiteDatabaseTest, CreateAndDropTable) {
-    std::vector< cxx::Col > cols = getTestTableColumns();
-
-    ASSERT_TRUE(db_.createTable("test_table", cols));
+    ASSERT_TRUE(db_.createTable("test_table", getTestTableColumns()));
 
     auto result = db_.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'");
     ASSERT_TRUE(result.has_value());
@@ -64,8 +62,7 @@ TEST_F(SQLiteDatabaseTest, CreateAndDropTable) {
 }
 
 TEST_F(SQLiteDatabaseTest, InsertData) {
-    std::vector< cxx::Col > cols = getTestTableColumns();
-    ASSERT_TRUE(db_.createTable("test_table", cols));
+    ASSERT_TRUE(db_.createTable("test_table", getTestTableColumns()));
 
     ASSERT_TRUE(db_.insert("test_table", { "id", "name", "age", "salary", "active" }, { "1", "Alice", "30", "50000.50", "1" }));
 
@@ -82,8 +79,7 @@ TEST_F(SQLiteDatabaseTest, InsertData) {
 }
 
 TEST_F(SQLiteDatabaseTest, SelectData) {
-    std::vector< cxx::Col > cols = getTestTableColumns();
-    ASSERT_TRUE(db_.createTable("test_table", cols));
+    ASSERT_TRUE(db_.createTable("test_table", getTestTableColumns()));
 
     // Multiple insert
     ASSERT_TRUE(db_.insert("test_table", { "id", "name", "age", "salary", "active" }, { "1", "Alice", "30", "50000.50", "1" }));
@@ -103,8 +99,7 @@ TEST_F(SQLiteDatabaseTest, SelectData) {
 }
 
 TEST_F(SQLiteDatabaseTest, UpdateData) {
-    std::vector< cxx::Col > cols = getTestTableColumns();
-    ASSERT_TRUE(db_.createTable("test_table", cols));
+    ASSERT_TRUE(db_.createTable("test_table", getTestTableColumns()));
 
     ASSERT_TRUE(db_.insert("test_table", { "id", "name", "age", "salary", "active" }, { "1", "Alice", "30", "50000.50", "1" }));
 
@@ -129,8 +124,7 @@ TEST_F(SQLiteDatabaseTest, UpdateData) {
 }
 
 TEST_F(SQLiteDatabaseTest, DeleteData) {
-    std::vector< cxx::Col > cols = getTestTableColumns();
-    ASSERT_TRUE(db_.createTable("test_table", cols));
+    ASSERT_TRUE(db_.createTable("test_table", getTestTableColumns()));
 
     // Multiple instert
     ASSERT_TRUE(db_.insert("test_table", { "id", "name", "age" }, { "1", "Alice", "30" }));
@@ -171,7 +165,10 @@ TEST_F(SQLiteDatabaseTest, DataTypes) {
     ASSERT_TRUE(db_.createTable("types_test", cols));
 
     // Check insert multiple types
-    ASSERT_TRUE(db_.insert("types_test", { "int_val", "real_val", "text_val", "bool_val", "date_val", "timestamp_val" }, { "42", "3.14", "hello", "1", "2023-07-15", "2023-07-15 14:30:00" }));
+    ASSERT_TRUE(db_.insert(
+     "types_test",
+     { "int_val", "real_val", "text_val", "bool_val", "date_val", "timestamp_val" },
+     { "42", "3.14", "hello", "1", "2023-07-15", "2023-07-15 14:30:00" }));
 
     // Check data
     auto result = db_.select("types_test", {});
@@ -244,4 +241,11 @@ TEST_F(SQLiteDatabaseTest, ErrorHandling) {
 
     // Delete with wrong condition
     ASSERT_FALSE(db_.deleteFrom("error_test", "non_existent_column = 1"));
+}
+
+TEST_F(SQLiteDatabaseTest, CheckExistence) {
+    ASSERT_TRUE(db_.createTable("test_table", getTestTableColumns()));
+
+    EXPECT_TRUE(db_.isTableExist("test_table"));
+    EXPECT_FALSE(db_.isTableExist("non_existent_table"));
 }

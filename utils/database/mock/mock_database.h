@@ -17,6 +17,7 @@ namespace cxx {
         MOCK_METHOD(bool, insert, (const std::string &, const std::vector< std::string > &, const std::vector< std::string > &), (override));
         MOCK_METHOD(bool, update, (const std::string &, (const std::vector< std::pair< std::string, std::string > > &), const std::string &), (override));
         MOCK_METHOD(bool, deleteFrom, (const std::string &, const std::string &), (override));
+        MOCK_METHOD(bool, isTableExist, (const std::string &), (override));
         MOCK_METHOD(std::optional< QueryResult >, executeQuery, (const std::string &), (override));
     };
 

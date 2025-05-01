@@ -15,14 +15,19 @@ namespace cxx {
         ~SQLiteDatabase() override;
 
         bool connect(const InMemory & connectionInfo);
+
+        // BaseDatabase
         bool connect(const std::string & connectionInfo) override;
         void disconnect() override;
-        std::optional< QueryResult > executeQuery(const std::string & query) override;
+        bool isTableExist(const std::string & tableName) override;
 
         bool isReady() const noexcept override;
 
     private:
         bool connectImpl(const std::variant< std::string, InMemory > & connectionInfo);
+
+        // BaseDatabase
+        std::optional< QueryResult > executeQueryUnsafe(const std::string & query) override;
         std::string escapeString(const std::string & str) override;
 
     private:

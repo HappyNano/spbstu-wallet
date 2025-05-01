@@ -26,12 +26,16 @@ namespace cxx {
         ~PsqlDatabase() override;
 
         bool connect(const ConnectionInfo & connectionInfo);
+
+        // BaseDatabase
         bool connect(const std::string & connectionString) override;
         void disconnect() override;
-        std::optional< QueryResult > executeQuery(const std::string & query) override;
+
+        bool isReady() const noexcept override;
 
     private:
-        bool isReady() const noexcept override;
+        // BaseDatabase
+        std::optional< QueryResult > executeQueryUnsafe(const std::string & query) override;
         std::string escapeString(const std::string & str) override;
 
     private:

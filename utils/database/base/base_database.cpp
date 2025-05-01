@@ -31,7 +31,7 @@ bool BaseDatabase::createTable(const std::string & name, const std::vector< Col 
 
          query << ");";
 
-         auto result = executeQuery(query.str());
+         auto result = executeQueryUnsafe(query.str());
          return result.has_value();
      },
      false);
@@ -41,7 +41,7 @@ bool BaseDatabase::dropTable(const std::string & tableName) {
     return callWithCheck(
      [this, &tableName] {
          std::string query = "DROP TABLE " + escapeString(tableName) + ";";
-         auto result = executeQuery(query);
+         auto result = executeQueryUnsafe(query);
          return result.has_value();
      },
      false);
@@ -66,7 +66,7 @@ std::optional< QueryResult > BaseDatabase::select(const std::string & fromTableN
 
          query << " FROM " << escapeString(fromTableName) << ";";
 
-         return executeQuery(query.str());
+         return executeQueryUnsafe(query.str());
      },
      std::nullopt);
 }
@@ -99,7 +99,7 @@ bool BaseDatabase::insert(const std::string & tableName, const std::vector< std:
 
          query << ");";
 
-         auto result = executeQuery(query.str());
+         auto result = executeQueryUnsafe(query.str());
          return result.has_value();
      },
      false);
@@ -128,7 +128,7 @@ bool BaseDatabase::update(const std::string & tableName, const std::vector< std:
 
          query << ";";
 
-         auto result = executeQuery(query.str());
+         auto result = executeQueryUnsafe(query.str());
          return result.has_value();
      },
      false);
@@ -146,8 +146,46 @@ bool BaseDatabase::deleteFrom(const std::string & tableName, const std::string &
 
          query << ";";
 
-         auto result = executeQuery(query.str());
+         auto result = executeQueryUnsafe(query.str());
          return result.has_value();
      },
      false);
+}
+
+// Works for most SQL databases
+bool BaseDatabase::isTableExist(const std::string & tableName) {
+    return callWithCheck(
+     [this, &tableName] {
+         std::stringstream query;
+         query << "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '";
+         query << escapeString(tableName);
+         query << "');";
+
+         auto result = executeQueryUnsafe(query.str());
+         if (!result.has_value() || result->empty() || (*result)[0].empty()) {
+             return false;
+         }
+
+         // Convert the result to boolean
+         auto & value = (*result)[0][0];
+         if (std::holds_alternative< std::string >(value)) {
+             std::string stringVal = std::get< std::string >(value);
+             return stringVal == "t" || stringVal == "true" || stringVal == "1";
+         } else if (std::holds_alternative< bool >(value)) {
+             return std::get< bool >(value);
+         } else if (std::holds_alternative< int >(value)) {
+             return std::get< int >(value) != 0;
+         }
+
+         return false;
+     },
+     false);
+}
+
+std::optional< QueryResult > BaseDatabase::executeQuery(const std::string & query) {
+    return callWithCheck(
+     [this, &query] {
+         return executeQueryUnsafe(query);
+     },
+     std::nullopt);
 }

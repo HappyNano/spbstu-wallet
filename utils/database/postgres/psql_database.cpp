@@ -42,7 +42,7 @@ void PsqlDatabase::disconnect() {
     conn_.reset();
 }
 
-std::optional< QueryResult > PsqlDatabase::executeQuery(const std::string & query) {
+std::optional< QueryResult > PsqlDatabase::executeQueryUnsafe(const std::string & query) {
     try {
         pqxx::work txn(*conn_);
         pqxx::result result = txn.exec(query);

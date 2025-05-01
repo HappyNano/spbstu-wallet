@@ -60,6 +60,9 @@ namespace cxx {
         // Удаление данных
         virtual bool deleteFrom(const std::string & tableName, const std::string & whereCondition) = 0;
 
+        // Проверка существования таблицы
+        virtual bool isTableExist(const std::string & tableName) = 0;
+
         // Выполнение произвольного SQL-запроса
         virtual std::optional< QueryResult > executeQuery(const std::string & query) = 0;
     };
