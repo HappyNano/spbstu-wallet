@@ -14,3 +14,5 @@ LIBS(
 )
 
 END()
+
+ADD_TESTS(tests)

@@ -13,6 +13,5 @@ LIBS(
 
 END()
 
-add_subdirectory(database)
 add_subdirectory(receipt)
 add_subdirectory(service)

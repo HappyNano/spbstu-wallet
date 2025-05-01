@@ -6,7 +6,7 @@
 
 using namespace receipt_scanner;
 
-ReceiptScannerServiceImpl::ReceiptScannerServiceImpl(std::unique_ptr< cxx::IDatabase > db)
+ReceiptScannerServiceImpl::ReceiptScannerServiceImpl(std::shared_ptr< cxx::IDatabase > db)
   : db_{ std::move(db) } {
 }
 
