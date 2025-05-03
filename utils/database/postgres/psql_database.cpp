@@ -1,18 +1,32 @@
 #include "psql_database.h"
+#include "psql_transaction.h"
+
+#include <utils/string/trim.h>
 
 #include <spdlog/spdlog.h>
+
 #include <sstream>
 
 using namespace cxx;
 
 std::string PsqlDatabase::ConnectionInfo::toString() const {
     std::stringstream ss;
-    ss << "dbname=" << dbname << ' ';
-    ss << "user=" << user << ' ';
-    ss << "password=" << password << ' ';
-    ss << "host=" << host << ' ';
-    ss << "port=" << port;
-    return ss.str();
+    if (dbname.has_value()) {
+        ss << "dbname=" << *dbname << ' ';
+    }
+    if (user.has_value()) {
+        ss << "user=" << *user << ' ';
+    }
+    if (password.has_value()) {
+        ss << "password=" << *password << ' ';
+    }
+    if (host.has_value()) {
+        ss << "host=" << *host << ' ';
+    }
+    if (port.has_value()) {
+        ss << "port=" << *port << ' ';
+    }
+    return rtrimCopy(ss.str());
 }
 
 PsqlDatabase::PsqlDatabase() = default;
@@ -36,52 +50,12 @@ bool PsqlDatabase::connect(const std::string & connectionString) {
 }
 
 void PsqlDatabase::disconnect() {
-    if (isReady()) {
+    if (conn_) {
         conn_->close();
     }
     conn_.reset();
 }
 
-std::optional< QueryResult > PsqlDatabase::executeQueryUnsafe(const std::string & query) {
-    try {
-        pqxx::work txn(*conn_);
-        pqxx::result result = txn.exec(query);
-        txn.commit();
-
-        QueryResult queryResult;
-        for (const auto & row: result) {
-            std::vector< std::variant< int, double, std::string, bool > > rowData;
-
-            for (auto field = 0; field < row.size(); ++field) {
-                if (row[field].is_null()) {
-                    rowData.push_back(std::string("NULL"));
-                } else {
-                    rowData.push_back(std::string(row[field].c_str()));
-                }
-            }
-
-            queryResult.push_back(rowData);
-        }
-
-        return queryResult;
-    } catch (const std::exception & e) {
-        SPDLOG_ERROR("Query execution error: {}", e.what());
-        return std::nullopt;
-    }
-}
-
-bool PsqlDatabase::isReady() const noexcept {
-    return conn_ && conn_->is_open();
-}
-
-std::string PsqlDatabase::escapeString(const std::string & str) {
-    std::string result;
-    for (char c: str) {
-        if (c == '\'') {
-            result += "''";
-        } else {
-            result += c;
-        }
-    }
-    return result;
+std::unique_ptr< ITransaction > PsqlDatabase::makeTransaction() {
+    return std::make_unique< PsqlTransaction >(std::make_unique< pqxx::work >(*conn_));
 }

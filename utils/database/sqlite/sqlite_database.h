@@ -2,33 +2,21 @@
 
 #include <sqlite3.h>
 
-#include <utils/database/base/base_database.h>
+#include <utils/database/interface/i_database.h>
 
 namespace cxx {
 
-    class SQLiteDatabase final: public BaseDatabase {
-    public:
-        struct InMemory {};
-
+    class SQLiteDatabase final: public IDatabase {
     public:
         SQLiteDatabase() = default;
         ~SQLiteDatabase() override;
 
-        bool connect(const InMemory & connectionInfo);
+        bool connectInMemory();
+        bool connect(const std::string & connectionInfo);
+        void disconnect();
 
-        // BaseDatabase
-        bool connect(const std::string & connectionInfo) override;
-        void disconnect() override;
-        bool isTableExist(const std::string & tableName) override;
-
-        bool isReady() const noexcept override;
-
-    private:
-        bool connectImpl(const std::variant< std::string, InMemory > & connectionInfo);
-
-        // BaseDatabase
-        std::optional< QueryResult > executeQueryUnsafe(const std::string & query) override;
-        std::string escapeString(const std::string & str) override;
+        // IDatabase
+        std::unique_ptr< ITransaction > makeTransaction() override;
 
     private:
         sqlite3 * conn_ = nullptr;

@@ -22,9 +22,6 @@ namespace {
         }
 
         void TearDown() override {
-            if (db_) {
-                db_->disconnect();
-            }
         }
 
         static std::vector< cxx::Col > getTestTableColumns() {

@@ -1,17 +1,21 @@
 #pragma once
 
-#include <utils/database/interface/i_database.h>
+#include <utils/database/transaction/interface/i_transaction.h>
 
 namespace cxx {
 
     /**
-     * @brief Base Database class
+     * @brief BaseTransaction class
      * @details You just need to write realization of connect, disconnect, executeQueryUnsafe, isReady methods
      */
-    class BaseDatabase: public IDatabase {
+    class BaseTransaction: public ITransaction {
     public:
-        ~BaseDatabase() override = default;
+        ~BaseTransaction() override = default;
 
+        // Safe execute query method
+        std::optional< QueryResult > executeQuery(const std::string & query) override;
+
+        // Base SQL methods
         bool createTable(const std::string & name, const std::vector< Col > & cols) override;
         bool dropTable(const std::string & tableName) override;
         std::optional< QueryResult > select(const std::string & fromTableName, const std::vector< std::string > & colsName) override;
@@ -19,12 +23,10 @@ namespace cxx {
         bool update(const std::string & tableName, const std::vector< std::pair< std::string, std::string > > & colValuePairs, const std::string & whereCondition) override;
         bool deleteFrom(const std::string & tableName, const std::string & whereCondition) override;
 
+        // Helpers
         bool isTableExist(const std::string & tableName) override;
 
-        std::optional< QueryResult > executeQuery(const std::string & query) final;
-
     protected:
-        virtual bool isReady() const noexcept = 0;
         virtual std::optional< QueryResult > executeQueryUnsafe(const std::string & query) = 0;
         virtual std::string escapeString(const std::string & str) = 0;
 

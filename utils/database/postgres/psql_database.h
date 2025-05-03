@@ -1,22 +1,24 @@
 #pragma once
 
+#include <utils/database/interface/i_database.h>
+#include <utils/database/transaction/interface/i_transaction.h>
+
 #include <pqxx/pqxx>
 
-#include <utils/database/base/base_database.h>
-
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace cxx {
 
-    class PsqlDatabase final: public BaseDatabase {
+    class PsqlDatabase final: public IDatabase {
     public:
         struct ConnectionInfo {
-            std::string dbname;
-            std::string user;
-            std::string password;
-            std::string host;
-            std::string port;
+            std::optional< std::string > dbname;
+            std::optional< std::string > user;
+            std::optional< std::string > password;
+            std::optional< std::string > host;
+            std::optional< std::string > port;
 
             std::string toString() const;
         };
@@ -26,17 +28,11 @@ namespace cxx {
         ~PsqlDatabase() override;
 
         bool connect(const ConnectionInfo & connectionInfo);
+        bool connect(const std::string & connectionString);
+        void disconnect();
 
-        // BaseDatabase
-        bool connect(const std::string & connectionString) override;
-        void disconnect() override;
-
-        bool isReady() const noexcept override;
-
-    private:
-        // BaseDatabase
-        std::optional< QueryResult > executeQueryUnsafe(const std::string & query) override;
-        std::string escapeString(const std::string & str) override;
+        // IDatabase
+        std::unique_ptr< ITransaction > makeTransaction() override;
 
     private:
         std::unique_ptr< pqxx::connection > conn_;
