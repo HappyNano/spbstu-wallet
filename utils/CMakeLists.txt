@@ -1,5 +1,6 @@
 add_subdirectory(config)
 add_subdirectory(database)
 add_subdirectory(foo)
+add_subdirectory(http)
 add_subdirectory(singleton)
 add_subdirectory(string)

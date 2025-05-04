@@ -45,6 +45,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 find_package(libpqxx CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 
