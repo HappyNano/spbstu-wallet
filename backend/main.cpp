@@ -1,7 +1,5 @@
-#include <utils/database/postgres/psql_database.h>
 #include <backend/service/service.h>
-
-#include <grpcpp/grpcpp.h>
+#include <utils/database/postgres/psql_database.h>
 
 #include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>

@@ -56,6 +56,10 @@ void PsqlDatabase::disconnect() {
     conn_.reset();
 }
 
-std::unique_ptr< ITransaction > PsqlDatabase::makeTransaction() {
-    return std::make_unique< PsqlTransaction >(std::make_unique< pqxx::work >(*conn_));
+std::shared_ptr< ITransaction > PsqlDatabase::makeTransaction() {
+    return std::make_shared< PsqlTransaction >(std::make_unique< pqxx::work >(*conn_));
+}
+
+bool PsqlDatabase::isReady() const noexcept {
+    return static_cast< bool >(conn_);
 }

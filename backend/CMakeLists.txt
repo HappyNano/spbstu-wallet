@@ -5,7 +5,6 @@ SRCS(
 )
 
 LIBS(
-  lib_proto_wallet_service
   backend_service
   database_postgres
   spdlog::spdlog

@@ -6,7 +6,6 @@ SRCS(
 )
 
 LIBS(
-  lib_proto_wallet_service
   backend_receipt_processor
 
   database_postgres

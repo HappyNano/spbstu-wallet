@@ -8,7 +8,7 @@ SRCS(
 )
 
 LIBS(
-  database_base
+  database_interface
   database_transaction_base
   unofficial::sqlite3::sqlite3
   spdlog::spdlog

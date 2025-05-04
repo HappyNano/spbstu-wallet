@@ -32,7 +32,8 @@ namespace cxx {
         void disconnect();
 
         // IDatabase
-        std::unique_ptr< ITransaction > makeTransaction() override;
+        std::shared_ptr< ITransaction > makeTransaction() override;
+        bool isReady() const noexcept override;
 
     private:
         std::unique_ptr< pqxx::connection > conn_;

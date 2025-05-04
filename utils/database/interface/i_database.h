@@ -10,7 +10,8 @@ namespace cxx {
     public:
         virtual ~IDatabase();
 
-        virtual std::unique_ptr< ITransaction > makeTransaction() = 0;
+        virtual std::shared_ptr< ITransaction > makeTransaction() = 0;
+        virtual bool isReady() const noexcept = 0;
     };
 
 } // namespace cxx

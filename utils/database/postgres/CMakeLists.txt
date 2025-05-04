@@ -10,7 +10,8 @@ SRCS(
 LIBS(
   utils_string
 
-  database_base_transaction
+  database_interface
+  database_transaction_base
   libpqxx::pqxx
   spdlog::spdlog
 )

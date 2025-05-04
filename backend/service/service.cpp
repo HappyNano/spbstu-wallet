@@ -13,7 +13,7 @@ ReceiptScannerServiceImpl::ReceiptScannerServiceImpl(std::shared_ptr< cxx::IData
 grpc::Status ReceiptScannerServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/, const QRCodeRequest * request, ReceiptResponse * response) {
     SPDLOG_INFO("Received request from user: {} with QR code: {}", request->user_id(), request->qr_code_content());
 
-    db_->insert("receipts", { "qrdata" }, { request->qr_code_content() });
+    db_->makeTransaction()->insert("receipts", { "qrdata" }, { request->qr_code_content() });
 
     // Обрабатываем QR-код
     auto processedResponse = ReceiptProcessor::processQRCode(request->qr_code_content());

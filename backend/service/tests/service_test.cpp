@@ -1,5 +1,6 @@
 #include <backend/service/service.h>
 #include <utils/database/mock/mock_database.h>
+#include <utils/database/mock/mock_transaction.h>
 
 #include <gtest/gtest.h>
 
@@ -15,11 +16,16 @@ namespace {
     class ReceiptScannerServiceTest: public ::Test {
     public:
         void SetUp() override {
+            EXPECT_CALL(*mockDb_, makeTransaction)
+             .WillRepeatedly([this]() {
+                 return mockTransaction_;
+             });
             service_ = std::make_unique< receipt_scanner::ReceiptScannerServiceImpl >(mockDb_);
         }
 
     protected:
         const std::shared_ptr< MockDatabase > mockDb_ = std::make_shared< NiceMock< MockDatabase > >();
+        const std::shared_ptr< MockTransaction > mockTransaction_ = std::make_shared< NiceMock< MockTransaction > >();
 
         std::unique_ptr< receipt_scanner::ReceiptScannerServiceImpl > service_;
     };
@@ -40,7 +46,7 @@ namespace {
         // expectedReceipt.fiscalSign = "3906849540";
 
         // Настраиваем ожидаемое поведение мока
-        EXPECT_CALL(*mockDb_, insert)
+        EXPECT_CALL(*mockTransaction_, insert)
          .WillOnce([&request](const std::string & tableName, const std::vector< std::string > & cols, const std::vector< std::string > & data) {
              EXPECT_EQ(tableName, "receipts");
              EXPECT_EQ(cols, std::vector< std::string >{ "qrdata" });

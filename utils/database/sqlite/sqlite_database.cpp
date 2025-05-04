@@ -40,6 +40,10 @@ void SQLiteDatabase::disconnect() {
     }
 }
 
-std::unique_ptr< ITransaction > SQLiteDatabase::makeTransaction() {
-    return std::make_unique< SQLiteTransaction >(conn_);
+std::shared_ptr< ITransaction > SQLiteDatabase::makeTransaction() {
+    return std::make_shared< SQLiteTransaction >(conn_);
+}
+
+bool SQLiteDatabase::isReady() const noexcept {
+    return static_cast< bool >(conn_);
 }

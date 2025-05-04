@@ -9,6 +9,8 @@ using namespace testing;
 namespace cxx {
     class MockTransaction: public ITransaction {
     public:
+        MOCK_METHOD(void, abort, (), (override));
+        MOCK_METHOD(void, commit, (), (override));
         MOCK_METHOD(bool, createTable, (const std::string &, const std::vector< Col > &), (override));
         MOCK_METHOD(bool, dropTable, (const std::string &), (override));
         MOCK_METHOD(std::optional< QueryResult >, select, (const std::string &, const std::vector< std::string > &), (override));
