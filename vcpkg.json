@@ -1,25 +1,31 @@
 {
   "dependencies": [
     "gtest",
-    {
-      "name": "imgui",
-      "features": [
-        "opengl3-binding"
-      ]
-    },
     "nlohmann-json",
     "spdlog",
-    "stb",
-    "opencv4",
-    "protobuf",
-    "grpc",
     "sqlite3",
-    "libpqxx"
+    "libpqxx",
+    "protobuf",
+    "grpc"
   ],
   "features": {
+    "imagelibs": {
+      "description": "Dependencies needed for building apps",
+      "dependencies": [
+        {
+          "name": "imgui",
+          "features": [
+            "opengl3-binding"
+          ]
+        },
+        "stb",
+        "opencv4"
+      ]
+    },
     "android": {
       "description": "Dependencies needed for the android platform building",
       "dependencies": [
+        "imagelibs",
         {
           "name": "imgui",
           "features": [
@@ -31,6 +37,7 @@
     "other-platform": {
       "description": "Dependencies needed for the (Linux|Windows|Apple) platforms building",
       "dependencies": [
+        "imagelibs",
         {
           "name": "imgui",
           "features": [

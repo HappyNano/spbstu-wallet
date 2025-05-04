@@ -1,6 +1,7 @@
 {
   "files.exclude": {
     "**/.git": true,
+    "**/.dockerignore": true,
     "**/build": true,
     "**/.gitignore": true,
     "**/.cache": true,
