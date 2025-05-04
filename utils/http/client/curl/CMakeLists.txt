@@ -7,8 +7,11 @@ SRCS(
 
 LIBS(
   http_client_interface
+  utils_string
 
   CURL::libcurl
 )
 
 END()
+
+ADD_TESTS(tests)

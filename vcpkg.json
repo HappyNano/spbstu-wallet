@@ -6,7 +6,8 @@
     "sqlite3",
     "libpqxx",
     "protobuf",
-    "grpc"
+    "grpc",
+    "curl"
   ],
   "features": {
     "imagelibs": {
