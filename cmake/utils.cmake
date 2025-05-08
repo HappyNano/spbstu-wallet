@@ -80,9 +80,9 @@ function(generate_protobuf_sources PROTO_FILE)
   cmake_path(RELATIVE_PATH PROTO_DIR BASE_DIRECTORY ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE PROTO_DIR_REL)
   string(REPLACE "\/" "_" PROTO_DIR_REL_NAME ${PROTO_DIR_REL})
 
-  set(LIBRARIES )
+  set(__PROTO_LIBRARIES )
   if(PROTO_PARAM STREQUAL "GRPC")
-    list(APPEND LIBRARIES gRPC::grpc++)
+    list(APPEND __PROTO_LIBRARIES gRPC::grpc++_unsecure)
 
     set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.cc")
     set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_NAME}.grpc.pb.h")
@@ -94,9 +94,9 @@ function(generate_protobuf_sources PROTO_FILE)
     add_custom_command(
       OUTPUT ${SOURCES}
       COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-      ARGS  --proto_path=${PROTO_DIR}
-            --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
-            --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+      ARGS  --proto_path=${PROJECT_SOURCE_DIR}
+            --grpc_out=${PROJECT_BINARY_DIR}
+            --cpp_out=${PROJECT_BINARY_DIR}
             --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
             ${PROTO_FILE}
       DEPENDS ${PROTO_FILE}
@@ -111,23 +111,24 @@ function(generate_protobuf_sources PROTO_FILE)
     add_custom_command(
       OUTPUT ${SOURCES}
       COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-      ARGS  --proto_path=${PROTO_DIR}
-            --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+      ARGS  --proto_path=${PROJECT_SOURCE_DIR}
+            --cpp_out=${PROJECT_BINARY_DIR}
             ${PROTO_FILE}
       DEPENDS ${PROTO_FILE}
       COMMENT "Generating Protobuf files for ${PROTO_NAME}"
       VERBATIM
     )
   endif()
-  list(APPEND LIBRARIES protobuf::libprotobuf-lite) # !!! PROTO after grpc
+  list(APPEND __PROTO_LIBRARIES protobuf::libprotobuf-lite) # !!! PROTO after grpc
 
   set(LIBRARY_NAME lib_${PROTO_DIR_REL_NAME}_${PROTO_NAME})
-  add_library(${LIBRARY_NAME} SHARED ${SOURCES})
-  target_link_libraries(${LIBRARY_NAME} PUBLIC ${LIBRARIES})
-  target_include_directories(${LIBRARY_NAME} INTERFACE ${CMAKE_BINARY_DIR})
+  add_library(${LIBRARY_NAME} ${SOURCES})
+  target_link_libraries(${LIBRARY_NAME} PUBLIC ${__PROTO_LIBRARIES} ${LIBRARIES})
+  target_include_directories(${LIBRARY_NAME} PUBLIC ${CMAKE_BINARY_DIR})
   if(NOT USECLANGTIDY)
     set_target_properties(${LIBRARY_NAME} PROPERTIES CXX_CLANG_TIDY "")
   endif()
+  set(__PROTO_OUT_LIBS ${__PROTO_OUT_LIBS} ${LIBRARY_NAME} PARENT_SCOPE)
 
   set(proto_srcs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_SRCS} CACHE PATH SRCS)
   set(proto_hdrs_${PROTO_DIR_REL_NAME}_${PROTO_NAME} ${PROTO_HDRS} CACHE PATH HDRS)
@@ -172,9 +173,15 @@ macro(END)
       set_target_properties(${EXECUTABLE_NAME} PROPERTIES CXX_CLANG_TIDY "")
     endif()
   elseif(SUIT STREQUAL "PROTO")
+    set(__PROTO_OUT_LIBS )
     foreach(PROTO_FILE ${SOURCES})
       generate_protobuf_sources(${PROTO_FILE})
     endforeach()
+    cmake_path(RELATIVE_PATH  CMAKE_CURRENT_SOURCE_DIR BASE_DIRECTORY ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE PROTO_DIR_REL)
+    string(REPLACE "\/" "_" PROTO_DIR_REL_NAME ${PROTO_DIR_REL})
+    set(LIBRARY_NAME lib_${PROTO_DIR_REL_NAME})
+    add_library(${LIBRARY_NAME} INTERFACE)
+    target_link_libraries(${LIBRARY_NAME} INTERFACE ${__PROTO_OUT_LIBS})
   else()
     message(FATAL_ERROR "Error")
   endif()
