@@ -57,6 +57,18 @@
       }
     },
     {
+      "name": "default_backend_ofd_test",
+      "displayName": "Default Backend Build With OFD test",
+      "description": "Default Backend With OFD test build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "PLATFORM": "BACKEND",
+        "BUILD_TESTING": true,
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TEST_OFD": true
+      }
+    },
+    {
       "name": "default-test",
       "displayName": "Default Configuration for test",
       "binaryDir": "${sourceDir}/build",
