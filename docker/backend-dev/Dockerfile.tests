@@ -3,6 +3,7 @@ ARG REGISTRY_ID
 FROM cr.yandex/${REGISTRY_ID}/backend-develop:latest
 
 RUN apt-get update && apt-get install -y \
+    curl \
     cmake \
     g++ \
     clang-format \
@@ -11,14 +12,12 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /project
 
-# Копируем исходный код проекта
+# Copy code
 COPY . .
 
-# Создаем директорию для сборки
 RUN mkdir -p build \
     && cp -r /project/vcpkg_installed build/
 
-# Настраиваем и собираем проект
 RUN cmake -B build -S . \
       -DPLATFORM=BACKEND \
       -DCMAKE_BUILD_TYPE=Release \
@@ -27,13 +26,11 @@ RUN cmake -B build -S . \
     && cd build \
     && cmake --build . -j$(nproc)
 
-# Запускаем статический анализ (опционально)
 RUN FILES=$(find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) \
-    -not -path "./build/*" -not -path "./vcpkg/*" -not -path "./third_party/*") && \
+    -not -path "./build/*" -not -path "./vcpkg/*") && \
     if [ -f ".clang-tidy" ] && [ ! -z "$FILES" ]; then \
       echo "Running clang-tidy..." && \
       cd build && run-clang-tidy -p . $FILES; \
     fi
 
-# Запускаем тесты как проверку сборки образа
 RUN cd /project/build && ctest --output-on-failure
