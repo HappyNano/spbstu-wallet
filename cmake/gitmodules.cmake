@@ -1,5 +1,5 @@
 find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.gitmodules")
+if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.gitmodules" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     message(STATUS "Submodule update")
     execute_process(
         COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive

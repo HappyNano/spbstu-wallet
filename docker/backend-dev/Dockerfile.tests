@@ -2,6 +2,10 @@ ARG REGISTRY_ID
 
 FROM cr.yandex/${REGISTRY_ID}/backend-develop:latest
 
+RUN apt-get update && apt-get install -y \
+    ca-certificates
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /project
 
 # Copy code
