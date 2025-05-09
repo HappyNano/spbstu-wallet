@@ -1,0 +1,85 @@
+# Base configuration
+DOXYFILE_ENCODING      = UTF-8
+
+PROJECT_NAME           = "Wallet"
+PROJECT_NUMBER         = "0.1"
+PROJECT_BRIEF          = "This project is work for spbstu"
+
+PROJECT_LOGO           =
+PROJECT_ICON           =
+
+OUTPUT_DIRECTORY       = docs
+
+CREATE_SUBDIRS         = NO
+CREATE_SUBDIRS_LEVEL   = 8
+
+ALLOW_UNICODE_NAMES    = YES
+OUTPUT_LANGUAGE        = Russian
+
+# Files
+INPUT                  = backend platforms proto utils
+FILE_PATTERNS          = *.cpp *.h *.hpp *.c *.cc *.cxx *.proto
+RECURSIVE              = YES
+EXCLUDE                = build bin lib external third_party
+EXCLUDE_PATTERNS       = */tests/* */test/* */build/* */bin/* */.cxx/*
+EXAMPLE_PATH           = examples
+EXAMPLE_RECURSIVE      = YES
+
+# Настройки извлечения
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_PACKAGE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_ANON_NSPACES   = YES
+
+# Настройки препроцессора
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+SKIP_FUNCTION_MACROS   = NO
+PREDEFINED             = 
+
+# Настройки вывода
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+HTML_TIMESTAMP         = YES
+HTML_DYNAMIC_SECTIONS  = YES
+GENERATE_TREEVIEW      = YES
+TREEVIEW_WIDTH         = 250
+
+# Отключаем LaTeX
+GENERATE_LATEX         = NO
+
+# Графики и диаграммы
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+DOT_GRAPH_MAX_NODES    = 100
+DOT_TRANSPARENT        = YES
+UML_LOOK               = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+
+# Настройки предупреждений
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+
+# Дополнительные настройки
+USE_MDFILE_AS_MAINPAGE = README.md
+MARKDOWN_SUPPORT       = YES
+TOC_INCLUDE_HEADINGS   = 5
+AUTOLINK_SUPPORT       = YES
