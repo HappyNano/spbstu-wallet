@@ -1,6 +1,6 @@
 # Run from project-root directory
 
-FROM ubuntu:22.04 AS backend-dev-builder
+FROM ubuntu:24.04 AS backend-dev-builder
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -43,7 +43,7 @@ RUN rm -rf \
 FROM ubuntu:24.04 AS backend-dev
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential cmake ninja-build git \
+    build-essential cmake g++ curl clang-tidy clang-format ninja-build git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only needed
