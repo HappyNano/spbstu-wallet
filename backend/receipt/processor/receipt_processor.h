@@ -5,11 +5,11 @@
 #include <memory>
 #include <string>
 
-namespace receipt_scanner {
+namespace receipt {
 
     class ReceiptProcessor {
     public:
         static std::unique_ptr< ReceiptResponse > processQRCode(const std::string & qrCode);
     };
 
-} // namespace receipt_scanner
+} // namespace receipt
