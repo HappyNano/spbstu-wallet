@@ -2,14 +2,6 @@ ARG REGISTRY_ID
 
 FROM cr.yandex/${REGISTRY_ID}/backend-develop:latest
 
-RUN apt-get update && apt-get install -y \
-    curl \
-    cmake \
-    g++ \
-    clang-format \
-    clang-tidy \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /project
 
 # Copy code
