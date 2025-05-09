@@ -7,7 +7,7 @@
 
 #include <memory>
 
-namespace receipt_scanner {
+namespace receipt {
 
     class ReceiptScannerServiceImpl final: public ReceiptScannerService::Service {
     public:
@@ -19,4 +19,4 @@ namespace receipt_scanner {
         std::shared_ptr< cxx::IDatabase > db_;
     };
 
-} // namespace receipt_scanner
+} // namespace receipt

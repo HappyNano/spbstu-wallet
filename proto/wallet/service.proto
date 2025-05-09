@@ -1,83 +1,44 @@
 syntax = "proto3";
 
-package receipt_scanner;
+package receipt;
+
+import "proto/wallet/receipt/receipt.proto";
 
 // Сервис для сканирования и обработки чеков
 service ReceiptScannerService {
     // Отправляет QR-код чека и получает разобранную информацию
-    rpc ProcessQRCode(QRCodeRequest) returns (ReceiptResponse) {}
-}
-
-// Информация о товаре/услуге в чеке
-message ReceiptItem {
-    string name = 1;            // Наименование товара/услуги
-    double price = 2;           // Цена за единицу
-    double quantity = 3;        // Количество
-    double sum = 4;             // Общая стоимость позиции
-
-    optional string item_id = 5;             // Идентификатор товара
-    optional string measurement_unit = 6;    // Единица измерения
-  }
-
-// Основные данные чека
-message ReceiptData {
-    // Обязательные поля чека
-    string t = 1;   // Дата и время продажи (ггггммддTччмм)
-    double s = 2;   // Сумма чека
-    string fn = 3;  // Номер фискального накопителя
-    string i = 4;   // Номер фискального документа
-    string fp = 5;  // Фискальный признак документа
-    int32 n = 6;    // Вид документа: 1 - приход, 2 - возврат прихода,
-                    // 3 - расход, 4 - возврат расхода, ...
-
-    // Поля которые заполняет сервер
-    optional string retailer_name = 7;    // Название продавца
-    optional string retailer_inn = 8;     // ИНН продавца
-    optional string retailer_address = 9; // Адрес продавца
-
-    // Список товаров в чеке
-    repeated ReceiptItem items = 10;
-
-    // Способ оплаты
-    enum PaymentMethod {
-        PAYMENT_UNKNOWN = 0;
-        PAYMENT_CASH = 1;         // Наличные
-        PAYMENT_CARD = 2;         // Безналичный (карта)
-        PAYMENT_PREPAID = 3;      // Предоплата
-        PAYMENT_POSTPAID = 4;     // Постоплата
-        PAYMENT_MIXED = 5;        // Смешанный
+    rpc ProcessQRCode(QRCodeRequest) returns (ReceiptResponse) {
     }
-    optional PaymentMethod payment_method = 11;
-
-    // Дополнительная информация в виде ключ-значение
-    map<string, string> additional_info = 12;
 }
 
 // Запрос с содержимым QR-кода
 message QRCodeRequest {
-    string user_id = 1;         // User id (будет позже)
-    string qr_code_content = 2; // Распознанная строка QR-кода
-    int64 timestamp = 3;        // Время сканирования (Unix timestamp)
+    string user_id = 1; // User id (будет позже)
+    oneof data {
+        string qr_code_content = 2; // Данные QR-кода чека
+        Receipt receipt = 3;      // Распознанные данные QR-кода
+    }
+    int64 timestamp = 4; // Время сканирования (Unix timestamp)
 }
 
 // Ответ с данными чека
 message ReceiptResponse {
-  oneof result {
-    ReceiptData receipt = 1;   // Данные чека при успешном разборе
-    ErrorInfo error = 2;       // Информация об ошибке
-  }
+    oneof result {
+        ReceiptData ReceiptData = 1; // Данные чека при успешном разборе
+        ErrorInfo Error = 2;         // Информация об ошибке
+    }
 }
 
 // Структура ошибки
 message ErrorInfo {
-  enum ErrorCode {
-    UNKNOWN_ERROR = 0;
-    PARSING_ERROR = 1;
-    UNKNOWN_RECEIPT_FORMAT = 2;
-    SERVER_ERROR = 3;
-  }
+    enum ErrorCode {
+        UNKNOWN_ERROR = 0;
+        PARSING_ERROR = 1;
+        UNKNOWN_RECEIPT_FORMAT = 2;
+        SERVER_ERROR = 3;
+    }
 
-  ErrorCode code = 1;           // Код ошибки
-  string message = 2;           // Сообщение об ошибке
-  optional string details = 3;  // Детали ошибки
+    ErrorCode code = 1;          // Код ошибки
+    string message = 2;          // Сообщение об ошибке
+    optional string details = 3; // Детали ошибки
 }

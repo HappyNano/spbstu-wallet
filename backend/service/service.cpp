@@ -4,23 +4,23 @@
 
 #include <spdlog/spdlog.h>
 
-using namespace receipt_scanner;
+using namespace receipt;
 
 ReceiptScannerServiceImpl::ReceiptScannerServiceImpl(std::shared_ptr< cxx::IDatabase > db)
   : db_{ std::move(db) } {
 }
 
 grpc::Status ReceiptScannerServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/, const QRCodeRequest * request, ReceiptResponse * response) {
-    SPDLOG_INFO("Received request from user: {} with QR code: {}", request->user_id(), request->qr_code_content());
+    SPDLOG_INFO("Received request from user: {} with QR code: {}", request->user_id(), request->receipt().fn());
 
-    db_->makeTransaction()->insert("receipts", { "qrdata" }, { request->qr_code_content() });
+    // db_->makeTransaction()->insert("receipts", { "qrdata" }, { request->receipt() });
 
     // Обрабатываем QR-код
-    auto processedResponse = ReceiptProcessor::processQRCode(request->qr_code_content());
+    auto processedResponse = ReceiptProcessor::processQRCode("");
 
     // Копируем результат в ответ
-    if (processedResponse->has_receipt()) {
-        response->mutable_receipt()->CopyFrom(processedResponse->receipt());
+    if (processedResponse->has_receiptdata()) {
+        response->mutable_receiptdata()->mutable_receipt()->CopyFrom(processedResponse->receiptdata().receipt());
     } else {
         response->mutable_error()->CopyFrom(processedResponse->error());
     }

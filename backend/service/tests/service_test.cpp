@@ -8,7 +8,7 @@
 #include <string>
 
 using namespace cxx;
-using namespace receipt_scanner;
+using namespace receipt;
 using namespace testing;
 
 namespace {
@@ -20,14 +20,14 @@ namespace {
              .WillRepeatedly([this]() {
                  return mockTransaction_;
              });
-            service_ = std::make_unique< receipt_scanner::ReceiptScannerServiceImpl >(mockDb_);
+            service_ = std::make_unique< receipt::ReceiptScannerServiceImpl >(mockDb_);
         }
 
     protected:
         const std::shared_ptr< MockDatabase > mockDb_ = std::make_shared< NiceMock< MockDatabase > >();
         const std::shared_ptr< MockTransaction > mockTransaction_ = std::make_shared< NiceMock< MockTransaction > >();
 
-        std::unique_ptr< receipt_scanner::ReceiptScannerServiceImpl > service_;
+        std::unique_ptr< receipt::ReceiptScannerServiceImpl > service_;
     };
 
     TEST_F(ReceiptScannerServiceTest, ProcessQRCodeValidInput) {

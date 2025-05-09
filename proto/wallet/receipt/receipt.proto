@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package receipt;
+
+import "proto/wallet/receipt/item.proto";
+
+// Основные данные чека
+message Receipt {
+    optional uint64 id = 1; // id for database
+
+    string t = 2;  // Дата и время продажи (ггггммддTччмм)
+    double s = 3;  // Сумма чека
+    uint64 fn = 4; // Номер фискального накопителя
+    uint64 i = 5;  // Номер фискального документа
+    uint64 fp = 6; // Фискальный признак документа
+    int32 n = 7;   // Вид документа: 1 - приход, 2 - возврат прихода,
+                   // 3 - расход, 4 - возврат расхода, ...
+}
+
+message ReceiptData {
+    optional uint64 id = 1; // id for database
+
+    Receipt receipt = 2;
+
+    repeated ReceiptItem items = 3; // Список товаров в чеке
+
+    message Retailer {
+        reserved 1;
+        optional string name = 2;    // Название организации
+        optional string place = 3;   // Название продавца
+        optional string inn = 4;     // ИНН продавца
+        optional string address = 5; // Адрес продавца
+    }
+    Retailer retailer = 4;
+
+    // Дополнительная информация в виде ключ-значение
+    map< string, string > additional_info = 6;
+}

@@ -12,12 +12,12 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-using receipt_scanner::ReceiptScannerService;
-using receipt_scanner::QRCodeRequest;
-using receipt_scanner::ReceiptResponse;
-using receipt_scanner::ReceiptData;
-using receipt_scanner::ReceiptItem;
-using receipt_scanner::ErrorInfo;
+using receipt::ReceiptScannerService;
+using receipt::QRCodeRequest;
+using receipt::ReceiptResponse;
+using receipt::ReceiptData;
+using receipt::ReceiptItem;
+using receipt::ErrorInfo;
 
 class ReceiptScannerClient: public IReceiptScannerClient {
 public:

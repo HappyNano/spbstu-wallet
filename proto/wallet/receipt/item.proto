@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package receipt;
+
+// Информация о товаре/услуге в чеке
+message ReceiptItem {
+    enum ENDSType {
+        NDS_UNKNOWN = 0;
+        NDS_20 = 1;     // ставка НДС 20%
+        NDS_10 = 2;     // ставка НДС 10%
+        NDS_20_120 = 3; // ставка НДС расч. 20/120
+        NDS_10_110 = 4; // ставка НДС расч. 10/110
+        NDS_0 = 5;      // ставка НДС 0%
+        NO_NDS = 6;     // НДС не облагается
+    }
+
+    enum EPaymentType {
+        PAYMENT_TYPE_UNKNOWN = 0;
+        PAYMENT_TYPE_FULL_PREPAYMENT = 1;            // "ПРЕДОПЛАТА 100%"
+        PAYMENT_TYPE_PARTIAL_PREPAYMENT = 2;         // "ПРЕДОПЛАТА"
+        PAYMENT_TYPE_ADVANCE = 3;                    // "АВАНС"
+        PAYMENT_TYPE_FULL_PAYMENT = 4;               // "ПОЛНЫЙ РАСЧЕТ"
+        PAYMENT_TYPE_PARTIAL_PAYMENT_AND_CREDIT = 5; // "ЧАСТИЧНЫЙ РАСЧЕТ И КРЕДИТ"
+        PAYMENT_TYPE_CREDIT_TRANSFER = 6;            // "ПЕРЕДАЧА В КРЕДИТ"
+        PAYMENT_TYPE_CREDIT_PAYMENT = 7;             // "ОПЛАТА КРЕДИТА"
+    }
+
+    enum EProductType {
+        PRODUCT_TYPE_UNKNOWN = 0;
+        PRODUCT_TYPE_GOODS = 1;                  // "ТОВАР"
+        PRODUCT_TYPE_EXCISABLE_GOODS = 2;        // "ПОДАКЦИЗНЫЙ ТОВАР"
+        PRODUCT_TYPE_WORK = 3;                   // "РАБОТА"
+        PRODUCT_TYPE_SERVICE = 4;                // "УСЛУГА"
+        PRODUCT_TYPE_GAMBLING_BET = 5;           // "СТАВКА АЗАРТНОЙ ИГРЫ" or "СТАВКА ИГРЫ"
+        PRODUCT_TYPE_GAMBLING_PRIZE = 6;         // "ВЫИГРЫШ АЗАРТНОЙ ИГРЫ"
+        PRODUCT_TYPE_LOTTERY = 7;                // "ЛОТЕРЕЙНЫЙ БИЛЕТ" or "СТАВКА ЛОТЕРЕИ"
+        PRODUCT_TYPE_LOTTERY_PRIZE = 8;          // "ВЫИГРЫШ ЛОТЕРЕИ"
+        PRODUCT_TYPE_INTELLECTUAL_PROPERTY = 9;  // "ПРЕДОСТАВЛЕНИЕ РИД" or "РИД"
+        PRODUCT_TYPE_PAYMENT = 10;               // "ПЛАТЕЖ"
+        PRODUCT_TYPE_AGENT_COMMISSION = 11;      // "АГЕНТСКОЕ ВОЗНАГРАЖДЕНИЕ"
+        PRODUCT_TYPE_PAYMENT_CHARGE = 12;        // "ВЫПЛАТА"
+        PRODUCT_TYPE_OTHER = 13;                 // "ИНОЙ ПРЕДМЕТ РАСЧЕТА"
+        PRODUCT_TYPE_PROPERTY_RIGHT = 14;        // "ИМУЩЕСТВЕННОЕ ПРАВО"
+        PRODUCT_TYPE_NON_OPERATING_INCOME = 15;  // "ВНЕРЕАЛИЗАЦИОННЫЙ ДОХОД"
+        PRODUCT_TYPE_TAX_REDUCING_PAYMENTS = 16; // "ИНЫЕ ПЛАТЕЖИ И ВЗНОСЫ"
+        PRODUCT_TYPE_TRADE_FEE = 17;             // "ТОРГОВЫЙ СБОР"
+        PRODUCT_TYPE_RESORT_FEE = 18;            // "КУРОРТНЫЙ СБОР"
+        PRODUCT_TYPE_DEPOSIT = 19;               // "ЗАЛОГ"
+        PRODUCT_TYPE_EXPENSE = 20;               // "РАСХОД"
+        PRODUCT_TYPE_PENSION_INSURANCE_IE = 21;  // "ВЗНОСЫ НА ОБЯЗАТЕЛЬНОЕ ПЕНСИОННОЕ СТРАХОВАНИЕ ИП"
+        PRODUCT_TYPE_PENSION_INSURANCE = 22;     // "ВЗНОСЫ НА ОБЯЗАТЕЛЬНОЕ ПЕНСИОННОЕ СТРАХОВАНИЕ"
+        PRODUCT_TYPE_MEDICAL_INSURANCE_IE = 23;  // "ВЗНОСЫ НА ОБЯЗАТЕЛЬНОЕ МЕДИЦИНСКОЕ СТРАХОВАНИЕ ИП" or "ВЗНОСЫ НА ОМС ИП"
+        PRODUCT_TYPE_MEDICAL_INSURANCE = 24;     // "ВЗНОСЫ НА ОБЯЗАТЕЛЬНОЕ МЕДИЦИНСКОЕ СТРАХОВАНИЕ" or "ВЗНОСЫ НА ОМС"
+        PRODUCT_TYPE_SOCIAL_INSURANCE = 25;      // "ВЗНОСЫ НА ОБЯЗАТЕЛЬНОЕ СОЦИАЛЬНОЕ СТРАХОВАНИЕ" or "ВЗНОСЫ НА ОСС"
+        PRODUCT_TYPE_CASINO_PAYMENT = 26;        // "ПЛАТЕЖ КАЗИНО"
+    }
+
+    enum EMeasurementUnit {
+        // Basic units
+        // Applied for items that can be sold individually or by units
+        MEASUREMENT_UNIT_PIECE = 0; // "шт." or "ед."
+
+        // Weight measurements
+        MEASUREMENT_UNIT_GRAM = 10;     // "г" - Gram
+        MEASUREMENT_UNIT_KILOGRAM = 11; // "кг" - Kilogram
+        MEASUREMENT_UNIT_TON = 12;      // "т" - Ton
+
+        // Linear measurements
+        MEASUREMENT_UNIT_CENTIMETER = 20; // "см" - Centimeter
+        MEASUREMENT_UNIT_DECIMETER = 21;  // "дм" - Decimeter
+        MEASUREMENT_UNIT_METER = 22;      // "м" - Meter
+
+        // Area measurements
+        MEASUREMENT_UNIT_SQUARE_CENTIMETER = 30; // "кв. см" - Square centimeter
+        MEASUREMENT_UNIT_SQUARE_DECIMETER = 31;  // "кв. дм" - Square decimeter
+        MEASUREMENT_UNIT_SQUARE_METER = 32;      // "кв. м" - Square meter
+
+        // Volume measurements
+        MEASUREMENT_UNIT_MILLILITER = 40;  // "мл" - Milliliter
+        MEASUREMENT_UNIT_LITER = 41;       // "л" - Liter
+        MEASUREMENT_UNIT_CUBIC_METER = 42; // "куб. м" - Cubic meter
+
+        // Energy measurements
+        MEASUREMENT_UNIT_KILOWATT_HOUR = 50; // "кВт∙ч" - Kilowatt hour
+        MEASUREMENT_UNIT_GIGACALORIE = 51;   // "Гкал" - Gigacalorie
+
+        // Time measurements
+        MEASUREMENT_UNIT_DAY = 70;    // "сутки" - Day
+        MEASUREMENT_UNIT_HOUR = 71;   // "час" - Hour
+        MEASUREMENT_UNIT_MINUTE = 72; // "мин" - Minute
+        MEASUREMENT_UNIT_SECOND = 73; // "с" - Second
+
+        // Data measurements
+        MEASUREMENT_UNIT_KILOBYTE = 80; // "Кбайт" - Kilobyte
+        MEASUREMENT_UNIT_MEGABYTE = 81; // "Мбайт" - Megabyte
+        MEASUREMENT_UNIT_GIGABYTE = 82; // "Гбайт" - Gigabyte
+        MEASUREMENT_UNIT_TERABYTE = 83; // "Тбайт" - Terabyte
+    }
+
+    optional uint64 item_id = 1; // Идентификатор товара чека
+
+    string name = 2;     // Наименование товара/услуги
+    double price = 3;    // Цена за единицу
+    double quantity = 4; // Количество
+    double sum = 5;      // Общая стоимость позиции
+    ENDSType nds_type = 6;
+    EPaymentType payment_type = 7;
+    EProductType product_type = 8;
+    EMeasurementUnit measurement_unit = 9;
+}
