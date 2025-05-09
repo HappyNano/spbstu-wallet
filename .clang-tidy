@@ -109,4 +109,3 @@ CheckOptions:
     value: UPPER_CASE
 
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*'

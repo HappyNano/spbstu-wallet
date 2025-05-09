@@ -1,7 +1,13 @@
 #!/bin/bash
 
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
-ROOT_DIR=$(pwd)
+
+if [[ -z $1 ]]; 
+then
+  ROOT_DIR=$(pwd)
+else
+  ROOT_DIR="$(pwd)/$1"
+fi
 # All c/cpp files
 FILES=$(find "$ROOT_DIR" -name '*.cpp' -o -name '*.h' -o -name '*.c' -o -name '*.hpp')
 

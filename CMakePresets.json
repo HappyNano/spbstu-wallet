@@ -2,18 +2,70 @@
   "version": 10,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 12,
+    "minor": 24,
     "patch": 0
   },
   "configurePresets": [
     {
       "name": "default",
       "displayName": "Default Config",
-      "description": "Default build with Conan2",
+      "description": "Default build with vcpkg",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/conan_install.cmake",
+        "BUILD_TESTING": false,
         "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "default_linux",
+      "displayName": "Default Linux Build",
+      "description": "Default Linux build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "PLATFORM": "LINUX",
+        "VCPKG_TARGET_TRIPLET":
+        {
+            "type": "STRING",
+            "value": "x64-linux"
+        },
+        "BUILD_TESTING": false,
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "default_android",
+      "displayName": "Default Android Build",
+      "description": "Default Android build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "PLATFORM": "ANDROID",
+        "ANDROID_ABI": "armeabi-v7a",
+        "ANDROID_PLATFORM": "android-24",
+        "BUILD_TESTING": false,
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "default_backend",
+      "displayName": "Default Backend Build",
+      "description": "Default Backend build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "PLATFORM": "BACKEND",
+        "BUILD_TESTING": true,
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "default_backend_ofd_test",
+      "displayName": "Default Backend Build With OFD test",
+      "description": "Default Backend With OFD test build with vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "PLATFORM": "BACKEND",
+        "BUILD_TESTING": true,
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TEST_OFD": true
       }
     },
     {
@@ -21,7 +73,6 @@
       "displayName": "Default Configuration for test",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/conan_install.cmake",
         "BUILD_TESTING": true,
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -39,25 +90,6 @@
       "configurePreset": "default-test",
       "output": {"outputOnFailure": true},
       "execution": {"noTestsAction": "error", "stopOnFailure": true}
-    }
-  ],
-  "workflowPresets": [
-    {
-      "name": "default",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "default"
-        },
-        {
-          "type": "build",
-          "name": "default"
-        },
-        {
-          "type": "test",
-          "name": "default"
-        }
-      ]
     }
   ]
 }

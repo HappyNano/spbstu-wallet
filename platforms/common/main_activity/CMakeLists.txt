@@ -1,0 +1,12 @@
+LIBRARY(common-main_activity)
+
+SRCS(
+  ${PROJECT_SOURCE_DIR}/platforms/common/main_activity/i_main_activity.cpp
+  ${PROJECT_SOURCE_DIR}/platforms/common/main_activity/i_main_activity.h
+)
+
+LIBS(
+  imgui::imgui
+)
+
+END()

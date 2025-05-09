@@ -13,13 +13,16 @@ errors=0
 
 for filename in $(git diff --cached --name-only $against)
 do
-    if [[ $filename =~ .*\.(h|hpp|c|cpp)$ ]]
+    if [[ ! -f $filename ]]
+    then
+        echo "[clang-format-checks] File $filename deleted"
+    elif [[ $filename =~ .*\.(h|hpp|c|cpp)$ ]]
     then
         diffs=$(diff -u <(git show :"$filename") <(git show :"$filename" | clang-format))
 
         if [[ ! -z $diffs ]]
         then
-            printf "Clang-format error with file $filename:\n$diffs\n"
+            printf "[clang-format-checks] Clang-format error with file $filename:\n$diffs\n"
             errors=$(($errors + 1))
         fi
     fi

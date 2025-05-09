@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package receipt;
+
+import "proto/wallet/receipt/receipt.proto";
+
+// Сервис для сканирования и обработки чеков
+service ReceiptScannerService {
+    // Отправляет QR-код чека и получает разобранную информацию
+    rpc ProcessQRCode(QRCodeRequest) returns (ReceiptResponse) {
+    }
+}
+
+// Запрос с содержимым QR-кода
+message QRCodeRequest {
+    string user_id = 1; // User id (будет позже)
+    oneof data {
+        string qr_code_content = 2; // Данные QR-кода чека
+        Receipt receipt = 3;      // Распознанные данные QR-кода
+    }
+    int64 timestamp = 4; // Время сканирования (Unix timestamp)
+}
+
+// Ответ с данными чека
+message ReceiptResponse {
+    oneof result {
+        ReceiptData ReceiptData = 1; // Данные чека при успешном разборе
+        ErrorInfo Error = 2;         // Информация об ошибке
+    }
+}
+
+// Структура ошибки
+message ErrorInfo {
+    enum ErrorCode {
+        UNKNOWN_ERROR = 0;
+        PARSING_ERROR = 1;
+        UNKNOWN_RECEIPT_FORMAT = 2;
+        SERVER_ERROR = 3;
+    }
+
+    ErrorCode code = 1;          // Код ошибки
+    string message = 2;          // Сообщение об ошибке
+    optional string details = 3; // Детали ошибки
+}

@@ -1,0 +1,191 @@
+{
+    "code": 1,
+    "first": 0,
+    "data": {
+        "json": {
+            "code": 3,
+            "user": "ООО \"Агроторг\"",
+            "items": [
+                {
+                    "nds": 1,
+                    "sum": 26699,
+                    "name": "PAP.Бум.туал.3сл белая 12рул",
+                    "price": 26699,
+                    "quantity": 1,
+                    "paymentType": 4,
+                    "productType": 1,
+                    "itemsQuantityMeasure": 0
+                },
+                {
+                    "nds": 1,
+                    "sum": 999,
+                    "name": "Пакет ПЯТЕРОЧКА 65х40см",
+                    "price": 999,
+                    "quantity": 1,
+                    "paymentType": 4,
+                    "productType": 1,
+                    "itemsQuantityMeasure": 0
+                },
+                {
+                    "nds": 2,
+                    "sum": 12999,
+                    "name": "GL.VIL.Нектар мультифрукт 0,95л",
+                    "price": 12999,
+                    "quantity": 1,
+                    "paymentType": 4,
+                    "productType": 33,
+                    "productCodeNew": {
+                        "gs1m": {
+                            "gtin": "04660028375878",
+                            "sernum": "5M(RU3XDj.nKk",
+                            "productIdType": 6,
+                            "rawProductCode": "0104660028375878215M(RU3XDj.nKk"
+                        }
+                    },
+                    "labelCodeProcesMode": 0,
+                    "itemsIndustryDetails": [
+                        {
+                            "idFoiv": "030",
+                            "industryPropValue": "UUID=e906ca96-1e51-4352-942b-888781a8b779&Time=1741978532571",
+                            "foundationDocNumber": "1944",
+                            "foundationDocDateTime": "21.11.2023"
+                        }
+                    ],
+                    "itemsQuantityMeasure": 0,
+                    "checkingProdInformationResult": 15
+                },
+                {
+                    "nds": 2,
+                    "sum": 10699,
+                    "name": "САРАФ.Мол.паст.дет.2,5% 930мл",
+                    "price": 10699,
+                    "quantity": 1,
+                    "paymentType": 4,
+                    "productType": 33,
+                    "productCodeNew": {
+                        "gs1m": {
+                            "gtin": "04813445000025",
+                            "sernum": "2UebGEhg",
+                            "productIdType": 6,
+                            "rawProductCode": "0104813445000025212UebGEhg"
+                        }
+                    },
+                    "labelCodeProcesMode": 0,
+                    "itemsIndustryDetails": [
+                        {
+                            "idFoiv": "030",
+                            "industryPropValue": "UUID=2aa271a9-1bd9-4ee3-9eae-49bd69971524&Time=1741978537218",
+                            "foundationDocNumber": "1944",
+                            "foundationDocDateTime": "21.11.2023"
+                        }
+                    ],
+                    "itemsQuantityMeasure": 0,
+                    "checkingProdInformationResult": 15
+                },
+                {
+                    "nds": 1,
+                    "sum": 47994,
+                    "name": "PICNIC Батончик BIG 76г",
+                    "price": 7999,
+                    "quantity": 6,
+                    "paymentType": 4,
+                    "productType": 1,
+                    "itemsQuantityMeasure": 0
+                },
+                {
+                    "nds": 1,
+                    "sum": 9999,
+                    "name": "GL.VIL.S.Кукуруза сладкая 340г",
+                    "price": 9999,
+                    "quantity": 1,
+                    "paymentType": 4,
+                    "productType": 1,
+                    "itemsQuantityMeasure": 0
+                },
+                {
+                    "nds": 1,
+                    "sum": 9899,
+                    "name": "GLOBUS Кукуруза сладк.ж\/б 340г",
+                    "price": 9899,
+                    "quantity": 1,
+                    "paymentType": 4,
+                    "productType": 1,
+                    "itemsQuantityMeasure": 0
+                },
+                {
+                    "nds": 2,
+                    "sum": 27998,
+                    "name": "ПАПА МОЖ.Колб.СЕРВ.ФИН.в\/к 350г",
+                    "price": 13999,
+                    "quantity": 2,
+                    "paymentType": 4,
+                    "productType": 1,
+                    "itemsQuantityMeasure": 0
+                },
+                {
+                    "nds": 2,
+                    "sum": 11398,
+                    "name": "Брецель-дог с кунжутом 159г",
+                    "price": 5699,
+                    "quantity": 2,
+                    "paymentType": 4,
+                    "productType": 1,
+                    "itemsQuantityMeasure": 0
+                }
+            ],
+            "nds10": 5736,
+            "nds18": 15933,
+            "fnsUrl": "www.nalog.gov.ru",
+            "region": "78",
+            "userInn": "7825706086  ",
+            "dateTime": "2025-03-14T21:59:00",
+            "kktRegId": "0006507245008590    ",
+            "metadata": {
+                "id": 5737449325058153472,
+                "ofdId": "ofd22",
+                "address": "194100,Россия,город федерального значения Санкт-Петербург,муниципальный округ Сампсониевское вн.тер.г.,,,,Александра Матросова ул,,Дом 20,, 2,Литер А,Помещение 20-Н,",
+                "subtype": "receipt",
+                "receiveDate": "2025-03-14T21:57:08Z"
+            },
+            "totalSum": 158684,
+            "creditSum": 0,
+            "numberKkt": "0292480006113082",
+            "fiscalSign": 615715057,
+            "prepaidSum": 0,
+            "properties": {
+                "propertyName": "X5",
+                "propertyValue": "Q539;POS71-BO-Q539;65bb1e4d650c488cbf7fccf2ea6cfe69;8e48172f9effa1cda6d938a2c5a370b5"
+            },
+            "retailPlace": "Q539 7050-Пятерочка",
+            "shiftNumber": 243,
+            "cashTotalSum": 0,
+            "provisionSum": 0,
+            "ecashTotalSum": 158684,
+            "machineNumber": "0292480006113082",
+            "operationType": 1,
+            "redefine_mask": 0,
+            "requestNumber": 268,
+            "fiscalDriveNumber": "7282440500213781",
+            "messageFiscalSign": 9.29733363014433e+18,
+            "retailPlaceAddress": "194100, 78, город федерального значения Санкт-Петербург, Александра Матросова ул, 20, 2 лит.А, пом.20-Н",
+            "appliedTaxationType": 1,
+            "fiscalDocumentNumber": 65152,
+            "fiscalDocumentFormatVer": 4,
+            "checkingLabeledProdResult": 0
+        },
+        "html": "<table class=\"b-check_table table\"><tbody><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">ООО \"Агроторг\"<\/td><\/tr><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">194100, 78, город федерального значения Санкт-Петербург, Александра Матросова ул, 20, 2 лит.А, пом.20-Н<\/td><\/tr><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">ИНН 7825706086  <\/td><\/tr><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">&nbsp;<\/td><\/tr><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">14.03.2025 21:59<\/td><\/tr><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">Чек № 268<\/td><\/tr><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">Смена № 243<\/td><\/tr><tr class=\"b-check_vblock-middle b-check_center\"><td colspan=\"5\">Кассир <\/td><\/tr><tr class=\"b-check_vblock-last b-check_center\"><td colspan=\"5\">Приход<\/td><\/tr><tr><td><strong>№<\/strong><\/td><td><strong>Название<\/strong><\/td><td><strong>Цена<\/strong><\/td><td><strong>Кол.<\/strong><\/td><td><strong>Сумма<\/strong><\/td><\/tr><tr class=\"b-check_item\"><td>1<\/td><td>PAP.Бум.туал.3сл белая 12рул<\/td><td>266.99<\/td><td>1<\/td><td>266.99<\/td><\/tr><tr class=\"b-check_item\"><td>2<\/td><td>Пакет ПЯТЕРОЧКА 65х40см<\/td><td>9.99<\/td><td>1<\/td><td>9.99<\/td><\/tr><tr class=\"b-check_item\"><td>3<\/td><td>GL.VIL.Нектар мультифрукт 0,95л<\/td><td>129.99<\/td><td>1<\/td><td>129.99<\/td><\/tr><tr class=\"b-check_item\"><td>4<\/td><td>САРАФ.Мол.паст.дет.2,5% 930мл<\/td><td>106.99<\/td><td>1<\/td><td>106.99<\/td><\/tr><tr class=\"b-check_item\"><td>5<\/td><td>PICNIC Батончик BIG         76г<\/td><td>79.99<\/td><td>6<\/td><td>479.94<\/td><\/tr><tr class=\"b-check_item\"><td>6<\/td><td>GL.VIL.S.Кукуруза сладкая 340г<\/td><td>99.99<\/td><td>1<\/td><td>99.99<\/td><\/tr><tr class=\"b-check_item\"><td>7<\/td><td>GLOBUS Кукуруза сладк.ж\/б 340г<\/td><td>98.99<\/td><td>1<\/td><td>98.99<\/td><\/tr><tr class=\"b-check_item\"><td>8<\/td><td>ПАПА МОЖ.Колб.СЕРВ.ФИН.в\/к 350г<\/td><td>139.99<\/td><td>2<\/td><td>279.98<\/td><\/tr><tr class=\"b-check_item\"><td>9<\/td><td>Брецель-дог с кунжутом 159г<\/td><td>56.99<\/td><td>2<\/td><td>113.98<\/td><\/tr><tr class=\"b-check_vblock-first\"><td colspan=\"3\" class=\"b-check_itogo\">ИТОГО:<\/td><td><\/td><td class=\"b-check_itogo\">1586.84<\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"3\">Наличные<\/td><td><\/td><td>0.00<\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"3\">Карта<\/td><td><\/td><td>1586.84<\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"3\">НДС итога чека со ставкой 20%<\/td><td><\/td><td>159.33<\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"3\">НДС итога чека со ставкой 10%<\/td><td><\/td><td>57.36<\/td><\/tr><tr class=\"b-check_vblock-last\"><td colspan=\"5\">ВИД НАЛОГООБЛОЖЕНИЯ: ОСН<\/td><\/tr><tr class=\"b-check_vblock-first\"><td colspan=\"5\">РЕГ.НОМЕР ККТ: 0006507245008590    <\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"5\">ЗАВОД. №: <\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"5\">ФН: 7282440500213781<\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"5\">ФД: 65152<\/td><\/tr><tr class=\"b-check_vblock-middle\"><td colspan=\"5\">ФПД#: 615715057<\/td><\/tr><tr class=\"b-check_vblock-last\"><td colspan=\"5\" class=\"b-check_center\"><img src=\"\/qrcode\/generate?text=t%3D20250314T2159%26s%3D1586.84%26fn%3D7282440500213781%26i%3D65152%26fp%3D615715057%26n%3D1\" alt=\"QR код чека\" width=\"35%\" loading=\"lazy\" decoding=\"async\"><\/td><\/tr><\/tbody><\/table>"
+    },
+    "request": {
+        "qrurl": "",
+        "qrfile": "",
+        "qrraw": "",
+        "manual": {
+            "fn": "7282440500213781",
+            "fd": "65152",
+            "fp": "615715057",
+            "check_time": "20250314T2159",
+            "type": "1",
+            "sum": "1586.84"
+        }
+    }
+}

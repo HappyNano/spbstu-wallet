@@ -1,0 +1,13 @@
+if(PLATFORM STREQUAL "ANDROID")
+  add_subdirectory(android/cpp)
+elseif(PLATFORM STREQUAL "LINUX")
+  add_subdirectory(sdl)
+elseif(PLATFORM STREQUAL "WIN")
+  add_subdirectory(sdl)
+elseif(PLATFORM STREQUAL "APPLE")
+  add_subdirectory(sdl)
+else()
+  message(FATAL_ERROR "To build choose PLATFORM (ANDROID, LINUX, WIN, APPLE)")
+endif()
+
+add_subdirectory(common)

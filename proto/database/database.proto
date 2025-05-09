@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package databaseservice;
+
+// The database service definition
+service DatabaseService {
+  // Create a table
+  rpc CreateTable (CreateTableRequest) returns (StatusResponse) {}
+  
+  // Drop a table
+  rpc DropTable (DropTableRequest) returns (StatusResponse) {}
+  
+  // Select data from a table
+  rpc SelectData (SelectRequest) returns (SelectResponse) {}
+  
+  // Insert data into a table
+  rpc InsertData (InsertRequest) returns (StatusResponse) {}
+  
+  // Update data in a table
+  rpc UpdateData (UpdateRequest) returns (StatusResponse) {}
+  
+  // Delete data from a table
+  rpc DeleteData (DeleteRequest) returns (StatusResponse) {}
+}
+
+// Column definition
+message Column {
+  string name = 1;
+  enum DataType {
+    INTEGER = 0;
+    REAL = 1;
+    TEXT = 2;
+    BOOLEAN = 3;
+    DATE = 4;
+    TIMESTAMP = 5;
+  }
+  DataType type = 2;
+  enum Constraint {
+    NONE = 0;
+    PRIMARY_KEY = 1;
+    UNIQUE = 2;
+    NOT_NULL = 3;
+    FOREIGN_KEY = 4;
+  }
+  Constraint constraint = 3;
+}
+
+// Create table request
+message CreateTableRequest {
+  string table_name = 1;
+  repeated Column columns = 2;
+}
+
+// Drop table request
+message DropTableRequest {
+  string table_name = 1;
+}
+
+// Select request
+message SelectRequest {
+  string table_name = 1;
+  repeated string column_names = 2;
+}
+
+// Select response
+message SelectResponse {
+  bool success = 1;
+  string error_message = 2;
+  repeated Row rows = 3;
+}
+
+// Row definition for select results
+message Row {
+  repeated string values = 1;
+}
+
+// Insert request
+message InsertRequest {
+  string table_name = 1;
+  repeated string column_names = 2;
+  repeated string values = 3;
+}
+
+// Update request
+message UpdateRequest {
+  string table_name = 1;
+  message ColumnValue {
+    string column_name = 1;
+    string value = 2;
+  }
+  repeated ColumnValue column_values = 2;
+  string where_condition = 3;
+}
+
+// Delete request
+message DeleteRequest {
+  string table_name = 1;
+  string where_condition = 2;
+}
+
+// Status response for operations
+message StatusResponse {
+  bool success = 1;
+  string message = 2;
+}
