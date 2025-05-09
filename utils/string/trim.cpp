@@ -36,3 +36,13 @@ std::string cxx::rtrimCopy(std::string s) {
     rtrim(s);
     return s;
 }
+
+void cxx::trim(std::string & s) {
+    ltrim(s);
+    rtrim(s);
+}
+
+std::string cxx::trimCopy(std::string s) {
+    trim(s);
+    return s;
+}

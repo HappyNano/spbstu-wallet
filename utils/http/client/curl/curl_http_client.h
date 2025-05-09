@@ -43,7 +43,7 @@ namespace cxx {
         };
 
         /**
-         * @brief Constructs a CurlHttpClient with specified settings and initial headers.
+         * @brief Constructs a CurlHttpClient
          *
          * @param settings Configuration settings for the HTTP client.
          * @param initialHeaders Headers to be included in every request.
@@ -53,9 +53,6 @@ namespace cxx {
          Settings settings,
          Headers initialHeaders = {});
 
-        /**
-         * @brief Destructor that cleans up CURL resources.
-         */
         ~CurlHttpClient() override;
 
         /**

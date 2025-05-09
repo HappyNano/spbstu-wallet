@@ -6,3 +6,5 @@ SRCS(
 )
 
 END()
+
+add_subdirectory(doublespaces)
