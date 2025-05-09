@@ -6,6 +6,7 @@ SRCS(
 )
 
 LIBS(
+  lib_proto_wallet_receipt_receipt
   database_interface
 )
 

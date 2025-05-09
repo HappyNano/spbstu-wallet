@@ -1,13 +1,12 @@
 #pragma once
 
 #include <utils/database/interface/i_database.h>
-
-#include <proto/wallet/service.pb.h>
+#include <proto/wallet/receipt/receipt.pb.h>
 
 #include <memory>
 #include <string>
 
-namespace receipt_scanner {
+namespace receipt {
 
     class ReceiptDatabase final {
     public:
@@ -25,8 +24,9 @@ namespace receipt_scanner {
 
         void init();
 
+        void insertReceipt(const std::string & token, const Receipt & receipt);
         void insertReceiptData(const std::string & qrCode);
-        void insertReceiptData(const ReceiptData & receipt);
+        void insertReceiptData(const std::string & token, const ReceiptData & receipt);
 
         // auto getReceipt
 
@@ -35,4 +35,4 @@ namespace receipt_scanner {
         const std::shared_ptr< cxx::IDatabase > database_;
     };
 
-} // namespace receipt_scanner
+} // namespace receipt

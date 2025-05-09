@@ -1,7 +1,7 @@
 #include "receipt_database.h"
 #include <stdexcept>
 
-using namespace receipt_scanner;
+using namespace receipt;
 using namespace cxx;
 
 bool ReceiptDatabase::Config::isValid() const noexcept {
@@ -17,19 +17,21 @@ ReceiptDatabase::ReceiptDatabase(Config config, std::shared_ptr< cxx::IDatabase 
 }
 
 void ReceiptDatabase::init() {
-    if (not database_->isTableExist(config_.tableName)) {
-        database_->createTable(
+    auto transaction = database_->makeTransaction();
+    if (not transaction->isTableExist(config_.tableName)) {
+        transaction->createTable(
          config_.tableName,
          {
           { "id", Col::EDataType::INTEGER, Col::EConstraint::PRIMARY_KEY },
           { "qrdata", Col::EDataType::INTEGER },
           { "id", Col::EDataType::INTEGER },
-        })
+        });
     }
+
 }
 
 void ReceiptDatabase::insertReceiptData(const std::string & qrCode) {
-    database_->insert(config_.tableName, { "qrdata" }, { qrCode });
+    database_->makeTransaction()->insert(config_.tableName, { "qrdata" }, { qrCode });
 }
 
 void ReceiptDatabase::insertReceiptData(const ReceiptData & receipt) {
