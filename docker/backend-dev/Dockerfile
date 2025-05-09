@@ -40,7 +40,7 @@ RUN rm -rf \
     /vcpkg/buildtrees
 
 
-FROM ubuntu:22.04 AS backend-dev
+FROM ubuntu:24.04 AS backend-dev
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake ninja-build git \
