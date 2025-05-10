@@ -12,7 +12,7 @@ WORKDIR /project
 COPY . .
 
 RUN mkdir -p build \
-    && cp -r /project/vcpkg_installed build/
+    && mv /project/vcpkg_installed build/
 
 RUN cmake -B build -S . \
       -DPLATFORM=BACKEND \
@@ -21,12 +21,3 @@ RUN cmake -B build -S . \
       -DVCPKG_TARGET_TRIPLET=x64-linux \
     && cd build \
     && cmake --build . -j$(nproc)
-
-RUN FILES=$(find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) \
-    -not -path "./build/*" -not -path "./vcpkg/*") && \
-    if [ -f ".clang-tidy" ] && [ ! -z "$FILES" ]; then \
-      echo "Running clang-tidy..." && \
-      cd build && run-clang-tidy -p . $FILES; \
-    fi
-
-RUN cd /project/build && ctest --output-on-failure

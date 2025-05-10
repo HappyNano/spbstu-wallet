@@ -10,7 +10,7 @@ on:
 jobs:
   build_and_test:
     runs-on: self-hosted
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -27,11 +27,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build test image and run tests
+      - name: Build project image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./docker/backend-dev/Dockerfile.tests
+          file: ./docker/backend-dev/Dockerfile.building
           build-args: |
             REGISTRY_ID=${{ secrets.YANDEX_REGISTRY_IDENTITY }}
           push: false
@@ -40,20 +40,30 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # - name: Extract build artifacts
-      #   run: |
-      #     CONTAINER_ID=$(docker create backend-develop-tests:latest)
-          
-      #     mkdir -p ./artifacts
-      #     docker cp $CONTAINER_ID:/project/build/bin ./artifacts/ || true
-      #     docker cp $CONTAINER_ID:/project/build/lib ./artifacts/ || true
-          
-      #     # Удаляем контейнер
-      #     docker rm $CONTAINER_ID
+      - name: Run tests
+        run: |
+          docker run --rm -v $(pwd):/project -w /project \
+            backend-develop-tests:latest \
+            /bin/bash -c '
+              set -e
 
-      # - name: Archive artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: build-artifacts
-      #     path: ./artifacts
-      #     retention-days: 7
+              cd build
+              ctest -C Release --output-on-failure -j$(nproc)
+              echo "Tests completed successfully"
+            '
+
+      - name: Extract build artifacts
+        run: |
+          CONTAINER_ID=$(docker create backend-develop-tests:latest)
+
+          mkdir -p ./artifacts
+          docker cp $CONTAINER_ID:/project/build/backend/backend_main ./artifacts/ || true
+
+          docker rm $CONTAINER_ID
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./artifacts
+          retention-days: 7
