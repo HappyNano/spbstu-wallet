@@ -1,3 +1,6 @@
+[![Build Backend Docker Image](https://github.com/HappyNano/spbstu-wallet/actions/workflows/build-backend-workflow.yml/badge.svg)](https://github.com/HappyNano/spbstu-wallet/actions/workflows/build-backend-workflow.yml)
+[![Build and Test](https://github.com/HappyNano/spbstu-wallet/actions/workflows/tests-backend.yml/badge.svg)](https://github.com/HappyNano/spbstu-wallet/actions/workflows/tests-backend.yml)
+[![Generate Doxygen Documentation](https://github.com/HappyNano/spbstu-wallet/actions/workflows/doxygen-docs.yml/badge.svg)](https://github.com/HappyNano/spbstu-wallet/actions/workflows/doxygen-docs.yml)
 # Установка
 
 ## Установка пакетов, vcpkg, android-sdk
