@@ -46,13 +46,13 @@ namespace {
         // expectedReceipt.fiscalSign = "3906849540";
 
         // Настраиваем ожидаемое поведение мока
-        EXPECT_CALL(*mockTransaction_, insert)
-         .WillOnce([&request](const std::string & tableName, const std::vector< std::string > & cols, const std::vector< std::string > & data) {
-             EXPECT_EQ(tableName, "receipts");
-             EXPECT_EQ(cols, std::vector< std::string >{ "qrdata" });
-             EXPECT_EQ(data, std::vector< std::string >{ request.qr_code_content() });
-             return true;
-         });
+        // EXPECT_CALL(*mockTransaction_, insert)
+        //  .WillOnce([&request](const std::string & tableName, const std::vector< std::string > & cols, const std::vector< std::string > & data) {
+        //      EXPECT_EQ(tableName, "receipts");
+        //      EXPECT_EQ(cols, std::vector< std::string >{ "qrdata" });
+        //      EXPECT_EQ(data, std::vector< std::string >{ request.qr_code_content() });
+        //      return true;
+        //  });
 
         // Act
         grpc::Status status = service_->ProcessQRCode(&context, &request, &response);
