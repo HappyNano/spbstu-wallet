@@ -42,8 +42,7 @@ jobs:
 
       - name: Run tests
         run: |
-          docker run --rm -v $(pwd):/project -w /project \
-            backend-develop-tests:latest \
+          docker run --rm backend-develop-tests:latest \
             /bin/bash -c '
               set -e
 
