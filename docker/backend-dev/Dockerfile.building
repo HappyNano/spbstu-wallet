@@ -25,5 +25,9 @@ RUN cmake -B build -S . \
 
 FROM ubuntu:24.04 AS backend-develop-tests
 
+RUN apt-get update && apt-get install -y \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /project
 COPY --from=backend-develop-tests-builder /project/build /project/build
