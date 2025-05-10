@@ -1,6 +1,6 @@
 ARG REGISTRY_ID
 
-FROM cr.yandex/${REGISTRY_ID}/backend-develop:latest
+FROM cr.yandex/${REGISTRY_ID}/backend-develop:latest AS backend-develop-tests-builder
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
@@ -21,3 +21,9 @@ RUN cmake -B build -S . \
       -DVCPKG_TARGET_TRIPLET=x64-linux \
     && cd build \
     && cmake --build . -j$(nproc)
+
+
+FROM ubuntu:24.04 AS backend-develop-tests
+
+WORKDIR /project
+COPY --from=backend-develop-tests-builder /project/build /project/build
