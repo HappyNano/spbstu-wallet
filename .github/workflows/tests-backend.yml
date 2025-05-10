@@ -37,8 +37,9 @@ jobs:
           push: false
           load: true
           tags: backend-develop-tests:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
+          cache-from: ""
+          cache-to: ""
 
       - name: Run tests
         run: |
