@@ -1,5 +1,5 @@
 #include "i_ofd.h"
 
-using namespace receipt;
+using namespace wallet;
 
 OFDInterface::~OFDInterface() = default;

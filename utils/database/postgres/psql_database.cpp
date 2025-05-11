@@ -63,3 +63,7 @@ std::shared_ptr< ITransaction > PsqlDatabase::makeTransaction() {
 bool PsqlDatabase::isReady() const noexcept {
     return static_cast< bool >(conn_);
 }
+
+std::string PsqlDatabase::escapeString(const std::string & str) {
+    return PsqlTransaction::escapeStringStatic(str);
+}

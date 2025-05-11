@@ -19,6 +19,7 @@ namespace cxx {
         MOCK_METHOD(bool, deleteFrom, (const std::string &, const std::string &), (override));
         MOCK_METHOD(bool, isTableExist, (const std::string &), (override));
         MOCK_METHOD(std::optional< QueryResult >, executeQuery, (const std::string &), (override));
+        MOCK_METHOD(std::string, escapeString, (const std::string &), (override));
     };
 
 } // namespace cxx

@@ -6,6 +6,6 @@
 
 using namespace nlohmann;
 
-namespace receipt {
+namespace wallet {
     auto parseItemFromJson(const json & data) -> ReceiptItem;
-} // namespace receipt
+} // namespace wallet

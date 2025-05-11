@@ -12,12 +12,12 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-using receipt::ReceiptScannerService;
-using receipt::QRCodeRequest;
-using receipt::ReceiptResponse;
-using receipt::ReceiptData;
-using receipt::ReceiptItem;
-using receipt::ErrorInfo;
+using wallet::FinanceService;
+using wallet::QRCodeRequest;
+using wallet::ReceiptResponse;
+using wallet::ReceiptData;
+using wallet::ReceiptItem;
+using wallet::ErrorInfo;
 
 class ReceiptScannerClient: public IReceiptScannerClient {
 public:
@@ -27,5 +27,5 @@ public:
     Response ProcessQRCode(const std::string& user_id, const std::string& qr_code) override;
 
 private:
-    std::unique_ptr< ReceiptScannerService::Stub > stub_;
+    std::unique_ptr< FinanceService::Stub > stub_;
 };

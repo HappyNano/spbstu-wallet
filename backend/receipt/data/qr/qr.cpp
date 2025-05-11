@@ -2,7 +2,7 @@
 
 #include <regex>
 
-bool receipt::isValidQRData(const std::string & data) {
+bool wallet::isValidQRData(const std::string & data) {
     // Проверяем общий формат фискального QR-кода
     std::regex fiscalQRRegex(
      "t=\\d{8}T\\d{4}&" // Дата и время (t)
@@ -16,7 +16,7 @@ bool receipt::isValidQRData(const std::string & data) {
     return std::regex_match(data, fiscalQRRegex);
 }
 
-receipt::Receipt receipt::parseQRDataFromString(const std::string & data) {
+wallet::Receipt wallet::parseQRDataFromString(const std::string & data) {
     // Парсим параметры QR-кода
     std::map< std::string, std::string > params;
     std::regex paramRegex("([^=&]+)=([^=&]+)");

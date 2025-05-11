@@ -47,3 +47,7 @@ std::shared_ptr< ITransaction > SQLiteDatabase::makeTransaction() {
 bool SQLiteDatabase::isReady() const noexcept {
     return static_cast< bool >(conn_);
 }
+
+std::string SQLiteDatabase::escapeString(const std::string & str) {
+    return SQLiteTransaction::escapeStringStatic(str);
+}

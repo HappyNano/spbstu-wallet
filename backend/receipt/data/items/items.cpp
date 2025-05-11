@@ -8,29 +8,29 @@
 
 namespace {
 
-    receipt::ReceiptItem::ENDSType getNDSType(int ndsInt) {
-        using namespace receipt;
+    wallet::ReceiptItem::ENDSType getNDSType(int ndsInt) {
+        using namespace wallet;
         return ReceiptItem::ENDSType_IsValid(ndsInt)
               ? static_cast< ReceiptItem::ENDSType >(ndsInt)
               : ReceiptItem::NDS_UNKNOWN;
     }
 
-    receipt::ReceiptItem::EPaymentType getPaymentType(int paymentTypeInt) {
-        using namespace receipt;
+    wallet::ReceiptItem::EPaymentType getPaymentType(int paymentTypeInt) {
+        using namespace wallet;
         return ReceiptItem::EPaymentType_IsValid(paymentTypeInt)
               ? static_cast< ReceiptItem::EPaymentType >(paymentTypeInt)
               : ReceiptItem::PAYMENT_TYPE_UNKNOWN;
     }
 
-    receipt::ReceiptItem::EProductType getProductType(int productTypeInt) {
-        using namespace receipt;
+    wallet::ReceiptItem::EProductType getProductType(int productTypeInt) {
+        using namespace wallet;
         return ReceiptItem::EProductType_IsValid(productTypeInt)
               ? static_cast< ReceiptItem::EProductType >(productTypeInt)
               : ReceiptItem::PRODUCT_TYPE_UNKNOWN;
     }
 
-    receipt::ReceiptItem::EMeasurementUnit getMeasurementUnit(int measurementUnitInt) {
-        using namespace receipt;
+    wallet::ReceiptItem::EMeasurementUnit getMeasurementUnit(int measurementUnitInt) {
+        using namespace wallet;
         return ReceiptItem::EMeasurementUnit_IsValid(measurementUnitInt)
               ? static_cast< ReceiptItem::EMeasurementUnit >(measurementUnitInt)
               : ReceiptItem::MEASUREMENT_UNIT_PIECE; // piece by default
@@ -45,7 +45,7 @@ namespace {
 
 } // unnamed namespace
 
-auto receipt::parseItemFromJson(const json & data) -> ReceiptItem {
+auto wallet::parseItemFromJson(const json & data) -> ReceiptItem {
     if (!data.is_object()) {
         throw std::runtime_error("Bad json input");
     }

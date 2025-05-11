@@ -36,6 +36,14 @@ namespace cxx {
          *@return bool True if the database is ready, false otherwise.
          */
         virtual bool isReady() const noexcept = 0;
+
+        /**
+         * @brief Escapes a string for safe use in SQL queries
+         *
+         * @param str The string to escape
+         * @return Escaped string safe for SQL queries
+         */
+        virtual std::string escapeString(const std::string & str) = 0;
     };
 
 } // namespace cxx

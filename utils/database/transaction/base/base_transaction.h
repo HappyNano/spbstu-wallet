@@ -95,14 +95,6 @@ namespace cxx {
          */
         virtual std::optional< QueryResult > executeQueryUnsafe(const std::string & query) = 0;
 
-        /**
-         * @brief Escapes a string for safe use in SQL queries
-         *
-         * @param str The string to escape
-         * @return Escaped string safe for SQL queries
-         */
-        virtual std::string escapeString(const std::string & str) = 0;
-
     private:
         /**
          * @brief Helper method to execute a function with error checking

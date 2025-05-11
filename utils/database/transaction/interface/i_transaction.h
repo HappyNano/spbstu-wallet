@@ -143,6 +143,14 @@ namespace cxx {
          * @return True if the table exists, false otherwise
          */
         virtual bool isTableExist(const std::string & tableName) = 0;
+
+        /**
+         * @brief Escapes a string for safe use in SQL queries
+         *
+         * @param str The string to escape
+         * @return Escaped string safe for SQL queries
+         */
+         virtual std::string escapeString(const std::string & str) = 0;
     };
 
 } // namespace cxx

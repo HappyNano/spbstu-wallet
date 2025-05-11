@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 using namespace cxx;
-using namespace receipt;
+using namespace wallet;
 using namespace nlohmann;
 
 namespace {

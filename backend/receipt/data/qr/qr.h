@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace receipt {
+namespace wallet {
     bool isValidQRData(const std::string & data);
     Receipt parseQRDataFromString(const std::string & data);
-} // namespace receipt
+} // namespace wallet

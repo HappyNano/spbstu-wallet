@@ -6,7 +6,8 @@ SRCS(
 )
 
 LIBS(
-  backend_receipt_processor
+  lib_proto_wallet_service
+  backend_receipt_data_qr
 
   database_postgres
   spdlog::spdlog

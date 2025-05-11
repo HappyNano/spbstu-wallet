@@ -3,7 +3,7 @@
 #include <sqlite3.h>
 #include <utils/database/interface/i_database.h>
 
- namespace cxx {
+namespace cxx {
 
     /**
      * @brief SQLite implementation of the IDatabase interface
@@ -56,6 +56,14 @@
          * @return True if the database is connected and ready for operations, false otherwise
          */
         bool isReady() const noexcept override;
+
+        /**
+         * @brief Escapes a string for safe use in SQL queries
+         *
+         * @param str The string to escape
+         * @return Escaped string safe for SQL queries
+         */
+        std::string escapeString(const std::string & str) override;
 
     private:
         /**

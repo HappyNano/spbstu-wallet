@@ -40,6 +40,8 @@ namespace cxx {
          */
         void commit() override;
 
+        static std::string escapeStringStatic(const std::string & str);
+
     private:
         // BaseTransaction interface implementation
 
