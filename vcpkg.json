@@ -10,26 +10,15 @@
     "curl"
   ],
   "features": {
-    "imagelibs": {
-      "description": "Dependencies needed for building apps",
-      "dependencies": [
-        {
-          "name": "imgui",
-          "features": [
-            "opengl3-binding"
-          ]
-        },
-        "stb",
-        "opencv4"
-      ]
-    },
     "android": {
       "description": "Dependencies needed for the android platform building",
       "dependencies": [
-        "imagelibs",
+        "stb",
+        "opencv4",
         {
           "name": "imgui",
           "features": [
+            "opengl3-binding",
             "android-binding"
           ]
         }
@@ -38,10 +27,12 @@
     "other-platform": {
       "description": "Dependencies needed for the (Linux|Windows|Apple) platforms building",
       "dependencies": [
-        "imagelibs",
+        "stb",
+        "opencv4",
         {
           "name": "imgui",
           "features": [
+            "opengl3-binding",
             "sdl3-binding"
           ]
         }
