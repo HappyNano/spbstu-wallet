@@ -77,3 +77,9 @@ cmake --build .
 [![Таблицы](./docs/service/database_tables_vertical.svg)](./docs/service/database_tables_vertical.svg)
 
 Сгенерировано с помощью программы https://www.dbvis.com/
+
+# Графическое представление service.proto:
+
+[![Таблицы](./docs/service/proto.svg)](./docs/service/proto.svg)
+
+Сгенерировано с помощью https://github.com/seamia/protodot
