@@ -16,7 +16,7 @@
 #include <memory>
 
 using namespace cxx;
-using namespace receipt;
+using namespace wallet;
 using namespace testing;
 using namespace nlohmann;
 

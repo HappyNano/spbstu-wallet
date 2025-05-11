@@ -11,7 +11,7 @@
 
 #include <memory>
 
-using namespace receipt;
+using namespace wallet;
 using namespace testing;
 using namespace nlohmann;
 
@@ -41,10 +41,10 @@ namespace {
             testReceiptItem_.set_price(26699.0);
             testReceiptItem_.set_quantity(1);
             testReceiptItem_.set_sum(26699.0);
-            testReceiptItem_.set_nds_type(receipt::ReceiptItem_ENDSType_NDS_20);
-            testReceiptItem_.set_payment_type(receipt::ReceiptItem_EPaymentType_PAYMENT_TYPE_FULL_PAYMENT);
-            testReceiptItem_.set_product_type(receipt::ReceiptItem_EProductType_PRODUCT_TYPE_GOODS);
-            testReceiptItem_.set_measurement_unit(receipt::ReceiptItem_EMeasurementUnit_MEASUREMENT_UNIT_PIECE);
+            testReceiptItem_.set_nds_type(wallet::ReceiptItem_ENDSType_NDS_20);
+            testReceiptItem_.set_payment_type(wallet::ReceiptItem_EPaymentType_PAYMENT_TYPE_FULL_PAYMENT);
+            testReceiptItem_.set_product_type(wallet::ReceiptItem_EProductType_PRODUCT_TYPE_GOODS);
+            testReceiptItem_.set_measurement_unit(wallet::ReceiptItem_EMeasurementUnit_MEASUREMENT_UNIT_PIECE);
         }
 
     protected:

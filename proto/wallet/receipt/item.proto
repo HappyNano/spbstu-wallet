@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package receipt;
+package wallet;
 
 // Информация о товаре/услуге в чеке
 message ReceiptItem {

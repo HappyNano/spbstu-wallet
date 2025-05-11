@@ -82,6 +82,14 @@ namespace cxx {
          */
         bool isReady() const noexcept override;
 
+        /**
+         * @brief Escapes a string for safe use in SQL queries
+         *
+         * @param str The string to escape
+         * @return Escaped string safe for SQL queries
+         */
+        std::string escapeString(const std::string & str) override;
+
     private:
         /**
          * @brief PostgreSQL database connection handle

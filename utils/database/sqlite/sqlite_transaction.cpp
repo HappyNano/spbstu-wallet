@@ -94,6 +94,10 @@ std::optional< QueryResult > SQLiteTransaction::executeQueryUnsafe(const std::st
 }
 
 std::string SQLiteTransaction::escapeString(const std::string & str) {
+    return escapeStringStatic(str);
+}
+
+std::string SQLiteTransaction::escapeStringStatic(const std::string & str) {
     std::string result;
     result.reserve(str.size() * 2);
 

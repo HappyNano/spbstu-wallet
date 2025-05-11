@@ -24,7 +24,7 @@ void runServer() {
      .port = "5432",
     });
 
-    receipt::ReceiptScannerServiceImpl service(std::move(db));
+    wallet::FinanceServiceImpl service(std::move(db));
 
     ServerBuilder builder;
     builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());

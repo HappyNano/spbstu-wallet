@@ -6,10 +6,10 @@
 
 using namespace testing;
 
-namespace receipt {
+namespace wallet {
 
     class MockOFD final: public OFDInterface {
-        MOCK_METHOD(ReceiptData, getReceiptData, (const Receipt&), (override));
+        MOCK_METHOD(ReceiptData, getReceiptData, (const Receipt &), (override));
     };
 
-} // namespace receipt
+} // namespace wallet

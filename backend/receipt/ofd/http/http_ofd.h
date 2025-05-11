@@ -3,7 +3,7 @@
 #include <backend/receipt/ofd/interface/i_ofd.h>
 #include <utils/http/client/interface/i_http_client.h>
 
-namespace receipt {
+namespace wallet {
 
     class HttpOFD final: public OFDInterface {
     public:
@@ -25,4 +25,4 @@ namespace receipt {
         const std::shared_ptr< cxx::IHttpClient > httpClient_;
     };
 
-} // namespace receipt
+} // namespace wallet

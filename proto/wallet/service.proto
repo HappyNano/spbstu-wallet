@@ -1,44 +1,452 @@
 syntax = "proto3";
 
-package receipt;
+package wallet;
 
 import "proto/wallet/receipt/receipt.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
-// Сервис для сканирования и обработки чеков
-service ReceiptScannerService {
-    // Отправляет QR-код чека и получает разобранную информацию
-    rpc ProcessQRCode(QRCodeRequest) returns (ReceiptResponse) {
-    }
-}
+// ================== Общие сообщения ==================
 
-// Запрос с содержимым QR-кода
-message QRCodeRequest {
-    string user_id = 1; // User id (будет позже)
-    oneof data {
-        string qr_code_content = 2; // Данные QR-кода чека
-        Receipt receipt = 3;      // Распознанные данные QR-кода
-    }
-    int64 timestamp = 4; // Время сканирования (Unix timestamp)
-}
-
-// Ответ с данными чека
-message ReceiptResponse {
-    oneof result {
-        ReceiptData ReceiptData = 1; // Данные чека при успешном разборе
-        ErrorInfo Error = 2;         // Информация об ошибке
-    }
-}
-
-// Структура ошибки
+// Информация об ошибке
 message ErrorInfo {
     enum ErrorCode {
         UNKNOWN_ERROR = 0;
-        PARSING_ERROR = 1;
-        UNKNOWN_RECEIPT_FORMAT = 2;
-        SERVER_ERROR = 3;
+        UNAUTHORIZED = 1;           // Отсутствие или неверный токен
+        INVALID_REQUEST = 2;        // Неверный формат запроса
+        NOT_FOUND = 3;              // Запрашиваемая сущность не найдена
+        ALREADY_EXISTS = 4;         // Сущность уже существует
+        SERVER_ERROR = 5;           // Ошибка на сервере
+        VALIDATION_ERROR = 6;       // Ошибка валидации данных
+        PARSING_ERROR = 7;          // Ошибка разбора данных
+        UNKNOWN_RECEIPT_FORMAT = 8; // Неизвестный формат чека
     }
 
-    ErrorCode code = 1;          // Код ошибки
-    string message = 2;          // Сообщение об ошибке
-    optional string details = 3; // Детали ошибки
+    ErrorCode code = 1;
+    string message = 2;
+    optional string details = 3;
+}
+
+// Общий формат ответа для всех запросов
+message Response {
+    oneof result {
+        google.protobuf.Empty success = 1; // Пустой результат в случае успеха
+        ErrorInfo error = 2;               // Информация об ошибке
+    }
+}
+
+// Структура для передачи аутентификационной информации
+message AuthInfo {
+    string token = 1; // Токен пользователя
+}
+
+// ================== Аутентификация ==================
+
+// Запрос на регистрацию или вход пользователя
+message AuthRequest {
+    string device_id = 1;            // Идентификатор устройства
+    optional string device_name = 2; // Название устройства
+}
+
+// Ответ с токеном авторизации
+message AuthResponse {
+    oneof result {
+        string token = 1;    // Токен пользователя при успешной авторизации
+        ErrorInfo error = 2; // Информация об ошибке
+    }
+}
+
+// ================== Чеки ==================
+
+// Сокращенная информация о чеке для списка
+message ReceiptInfo {
+    int32 id = 1;
+    string date = 2;                   // Дата и время продажи (ггггммддTччммcc)
+    int32 sum = 3;                     // Сумма чека в копейках
+    int32 receipt_type = 4;            // Вид документа
+    optional string retailer_name = 5; // Название организации
+    int32 items_count = 6;             // Количество позиций в чеке
+    bool has_transaction = 7;          // Связана ли с чеком транзакция
+}
+
+// Запрос для получения списка чеков
+message GetReceiptsRequest {
+    AuthInfo auth = 1;
+    optional google.protobuf.Timestamp from_date = 2;
+    optional google.protobuf.Timestamp to_date = 3;
+    optional int32 limit = 4;
+    optional int32 offset = 5;
+}
+
+// Список чеков
+message ReceiptsList {
+    repeated ReceiptInfo receipts = 1;
+    int32 total_count = 2;
+}
+
+// Ответ со списком чеков
+message ReceiptsResponse {
+    oneof result {
+        ReceiptsList receipts = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Запрос для получения детальной информации о чеке
+message GetReceiptDetailsRequest {
+    AuthInfo auth = 1;
+    int32 receipt_id = 2;
+}
+
+// Расширенный запрос для обработки QR-кода чека
+message QRCodeRequest {
+    AuthInfo auth = 1;
+    oneof data {
+        string qr_code_content = 2;
+        Receipt receipt = 3;
+    }
+    google.protobuf.Timestamp scanned_at = 4;
+    optional string comment = 5;
+    optional int32 category_id = 6;
+    bool create_transaction = 7;
+}
+
+// Ответ с детальной информацией о чеке (совместимый с ReceiptData и ReceiptDetails)
+message ReceiptDetailsResponse {
+    oneof result {
+        ReceiptData receipt_data = 1; // Данные чека при успешном разборе (старый формат)
+        ErrorInfo error = 2;                 // Информация об ошибке
+    }
+}
+
+// ================== Транзакции ==================
+
+// Структура для создания/редактирования транзакции
+message TransactionData {
+    optional int32 id = 1;
+    int32 type = 2;   // 0 - доход, 1 - расход
+    int32 amount = 3; // сумма в копейках
+    google.protobuf.Timestamp timestamp = 4;
+    optional int32 category_id = 5;
+    optional int32 receipt_id = 6;
+    optional string comment = 7;
+}
+
+// Запрос на создание транзакции
+message CreateTransactionRequest {
+    AuthInfo auth = 1;
+    TransactionData transaction = 2;
+}
+
+// Ответ на создание транзакции
+message CreateTransactionResponse {
+    oneof result {
+        int32 transaction_id = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Запрос на редактирование транзакции
+message UpdateTransactionRequest {
+    AuthInfo auth = 1;
+    TransactionData transaction = 2;
+}
+
+// Запрос на удаление транзакции
+message DeleteTransactionRequest {
+    AuthInfo auth = 1;
+    int32 transaction_id = 2;
+}
+
+// Запрос для получения списка транзакций
+message GetTransactionsRequest {
+    AuthInfo auth = 1;
+    optional google.protobuf.Timestamp from_date = 2;
+    optional google.protobuf.Timestamp to_date = 3;
+    optional int32 type = 4; // 0 - доходы, 1 - расходы, null - все
+    optional int32 category_id = 5;
+    optional int32 limit = 6;
+    optional int32 offset = 7;
+}
+
+// Краткая информация о транзакции для списка
+message TransactionInfo {
+    int32 id = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    int32 type = 3;
+    int32 amount = 4;
+    optional int32 category_id = 5;
+    optional string category_name = 6;
+    optional int32 receipt_id = 7;
+    optional string comment = 8;
+    bool has_splits = 9;
+}
+
+// Список транзакций
+message TransactionsList {
+    repeated TransactionInfo transactions = 1;
+    int32 total_count = 2;
+    int32 total_income = 3;
+    int32 total_expense = 4;
+    int32 balance = 5;
+}
+
+// Ответ со списком транзакций
+message TransactionsResponse {
+    oneof result {
+        TransactionsList transactions = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Запрос для получения детальной информации о транзакции
+message GetTransactionDetailsRequest {
+    AuthInfo auth = 1;
+    int32 transaction_id = 2;
+}
+
+// Информация о делении транзакции
+message TransactionSplitInfo {
+    int32 id = 1;
+    int32 character_id = 2;
+    string character_name = 3;
+    int32 amount = 4;
+    optional string comment = 5;
+}
+
+// Детальная информация о транзакции
+message TransactionDetails {
+    int32 id = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    int32 type = 3;
+    int32 amount = 4;
+    optional int32 category_id = 5;
+    optional string category_name = 6;
+    optional int32 receipt_id = 7;
+    optional string comment = 8;
+
+    optional ReceiptInfo receipt = 9;
+    repeated TransactionSplitInfo splits = 10;
+}
+
+// Ответ с детальной информацией о транзакции
+message TransactionDetailsResponse {
+    oneof result {
+        TransactionDetails transaction = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Структура для создания/редактирования деления транзакции
+message TransactionSplitData {
+    optional int32 id = 1;
+    int32 transaction_id = 2;
+    int32 character_id = 3;
+    int32 amount = 4;
+    optional string comment = 5;
+}
+
+// Запрос на создание деления транзакции
+message CreateSplitRequest {
+    AuthInfo auth = 1;
+    TransactionSplitData split = 2;
+}
+
+// Ответ на создание деления транзакции
+message CreateSplitResponse {
+    oneof result {
+        int32 split_id = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Запрос на редактирование деления транзакции
+message UpdateSplitRequest {
+    AuthInfo auth = 1;
+    TransactionSplitData split = 2;
+}
+
+// Запрос на удаление деления транзакции
+message DeleteSplitRequest {
+    AuthInfo auth = 1;
+    int32 split_id = 2;
+}
+
+// ================== Персонажи и категории ==================
+
+// Информация о персонаже
+message CharacterInfo {
+    int32 id = 1;
+    string name = 2;
+}
+
+// Запрос на получение списка персонажей
+message GetCharactersRequest {
+    AuthInfo auth = 1;
+}
+
+// Список персонажей
+message CharactersList {
+    repeated CharacterInfo characters = 1;
+}
+
+// Ответ со списком персонажей
+message CharactersResponse {
+    oneof result {
+        CharactersList characters_list = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Запрос на управление персонажем
+message ManageCharacterRequest {
+    AuthInfo auth = 1;
+    optional int32 id = 2;
+    string name = 3;
+}
+
+// Ответ на создание персонажа
+message ManageCharacterResponse {
+    oneof result {
+        int32 character_id = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Информация о категории
+message CategoryInfo {
+    int32 id = 1;
+    string name = 2;
+}
+
+// Запрос на получение списка категорий
+message GetCategoriesRequest {
+    AuthInfo auth = 1;
+}
+
+// Список категорий
+message CategoriesList {
+    repeated CategoryInfo categories = 1;
+}
+
+// Ответ со списком категорий
+message CategoriesResponse {
+    oneof result {
+        CategoriesList categories_list = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// Запрос на управление категорией
+message ManageCategoryRequest {
+    AuthInfo auth = 1;
+    optional int32 id = 2;
+    string name = 3;
+}
+
+// Ответ на создание категории
+message ManageCategoryResponse {
+    oneof result {
+        int32 category_id = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// ================== Статистика и аналитика ==================
+
+// Запрос на получение общей статистики
+message GetStatisticsRequest {
+    AuthInfo auth = 1;
+    optional google.protobuf.Timestamp from_date = 2;
+    optional google.protobuf.Timestamp to_date = 3;
+}
+
+// Статистика по категориям
+message CategoryStatistics {
+    int32 category_id = 1;
+    string category_name = 2;
+    int32 transactions_count = 3;
+    int32 total_amount = 4;
+    double percentage = 5;
+}
+
+// Статистика по персонажам
+message CharacterStatistics {
+    int32 character_id = 1;
+    string character_name = 2;
+    int32 splits_count = 3;
+    int32 total_amount = 4;
+    double percentage = 5;
+}
+
+// Данные для диаграммы
+message ChartData {
+    // Данные по дням
+    message DailyData {
+        string date = 1;
+        int32 income = 2;
+        int32 expense = 3;
+    }
+    repeated DailyData daily = 1;
+
+    repeated CategoryStatistics expenses_by_category = 2;
+    repeated CategoryStatistics incomes_by_category = 3;
+    repeated CharacterStatistics expenses_by_character = 4;
+}
+
+// Общая статистика
+message Statistics {
+    int32 total_income = 1;
+    int32 total_expense = 2;
+    int32 balance = 3;
+
+    int32 income_transactions_count = 4;
+    int32 expense_transactions_count = 5;
+
+    ChartData chart_data = 6;
+}
+
+// Ответ со статистикой
+message StatisticsResponse {
+    oneof result {
+        Statistics statistics = 1;
+        ErrorInfo error = 2;
+    }
+}
+
+// ================== Определение сервиса ==================
+
+service FinanceService {
+    // Авторизация
+    rpc Authenticate(AuthRequest) returns (AuthResponse);
+
+    // Чеки
+    rpc ProcessQRCode(QRCodeRequest) returns (ReceiptDetailsResponse);
+    rpc GetReceipts(GetReceiptsRequest) returns (ReceiptsResponse);
+    rpc GetReceiptDetails(GetReceiptDetailsRequest) returns (ReceiptDetailsResponse);
+
+    // Транзакции
+    rpc CreateTransaction(CreateTransactionRequest) returns (CreateTransactionResponse);
+    rpc UpdateTransaction(UpdateTransactionRequest) returns (Response);
+    rpc DeleteTransaction(DeleteTransactionRequest) returns (Response);
+    rpc GetTransactions(GetTransactionsRequest) returns (TransactionsResponse);
+    rpc GetTransactionDetails(GetTransactionDetailsRequest) returns (TransactionDetailsResponse);
+
+    // Деления транзакций
+    rpc CreateSplit(CreateSplitRequest) returns (CreateSplitResponse);
+    rpc UpdateSplit(UpdateSplitRequest) returns (Response);
+    rpc DeleteSplit(DeleteSplitRequest) returns (Response);
+
+    // Персонажи
+    rpc GetCharacters(GetCharactersRequest) returns (CharactersResponse);
+    rpc ManageCharacter(ManageCharacterRequest) returns (ManageCharacterResponse);
+    rpc DeleteCharacter(ManageCharacterRequest) returns (Response);
+
+    // Категории
+    rpc GetCategories(GetCategoriesRequest) returns (CategoriesResponse);
+    rpc ManageCategory(ManageCategoryRequest) returns (ManageCategoryResponse);
+    rpc DeleteCategory(ManageCategoryRequest) returns (Response);
+
+    // Статистика
+    rpc GetStatistics(GetStatisticsRequest) returns (StatisticsResponse);
 }

@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 
 ReceiptScannerClient::ReceiptScannerClient(const std::shared_ptr< Channel > & channel)
-  : stub_(ReceiptScannerService::NewStub(channel)) {
+  : stub_(FinanceService::NewStub(channel)) {
 }
 
 ReceiptScannerClient::Response ReceiptScannerClient::ProcessQRCode(const std::string & user_id, const std::string & qr_code) {

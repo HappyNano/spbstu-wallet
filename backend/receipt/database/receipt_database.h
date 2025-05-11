@@ -1,12 +1,12 @@
 #pragma once
 
-#include <utils/database/interface/i_database.h>
 #include <proto/wallet/receipt/receipt.pb.h>
+#include <utils/database/interface/i_database.h>
 
 #include <memory>
 #include <string>
 
-namespace receipt {
+namespace wallet {
 
     class ReceiptDatabase final {
     public:
@@ -35,4 +35,4 @@ namespace receipt {
         const std::shared_ptr< cxx::IDatabase > database_;
     };
 
-} // namespace receipt
+} // namespace wallet

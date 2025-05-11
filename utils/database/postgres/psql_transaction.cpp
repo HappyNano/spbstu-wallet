@@ -59,6 +59,10 @@ std::optional< QueryResult > PsqlTransaction::executeQueryUnsafe(const std::stri
 }
 
 std::string PsqlTransaction::escapeString(const std::string & str) {
+    return escapeStringStatic(str);
+}
+
+std::string PsqlTransaction::escapeStringStatic(const std::string & str) {
     std::string result;
     for (char c: str) {
         if (c == '\'') {
