@@ -2,7 +2,8 @@
 
 FROM ubuntu:24.04 AS android-dev-builder
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    echo "1" | DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     zip \
@@ -18,8 +19,8 @@ RUN apt-get update && apt-get install -y \
     autoconf \
     ca-certificates \
     google-android-platform-34-installer \
-    google-android-build-tools-34.0.0-install \
-    google-android-cmdline-tools-13.0-install \
+    google-android-build-tools-34.0.0-installer \
+    google-android-cmdline-tools-13.0-installer \
     google-android-ndk-r25-installer \
     && rm -rf /var/lib/apt/lists/*
 
@@ -51,11 +52,12 @@ RUN rm -rf \
 
 FROM ubuntu:24.04 AS android-dev
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && \
+    echo "1" | DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential cmake g++ curl clang-tidy clang-format ninja-build git ca-certificates \
     google-android-platform-34-installer \
-    google-android-build-tools-34.0.0-install \
-    google-android-cmdline-tools-13.0-install \
+    google-android-build-tools-34.0.0-installer \
+    google-android-cmdline-tools-13.0-installer \
     google-android-ndk-r25-installer \
     && rm -rf /var/lib/apt/lists/*
 
