@@ -59,3 +59,9 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 ## VSCode
 
 Для VSCode указан CMakePresets.json файл для сборки с помощью расширения Cmake-tools
+
+# Используемые таблицы:
+
+[![Таблицы](./docs/service/database_tables_vertical.svg)](./docs/service/database_tables_vertical.svg)
+
+Сгенерировано с помощью программы https://www.dbvis.com/
