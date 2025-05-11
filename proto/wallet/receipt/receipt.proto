@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package receipt;
+package wallet;
 
 import "proto/wallet/receipt/item.proto";
 
@@ -8,7 +8,7 @@ import "proto/wallet/receipt/item.proto";
 message Receipt {
     optional uint64 id = 1; // id for database
 
-    string t = 2;  // Дата и время продажи (ггггммддTччмм)
+    string t = 2;  // Дата и время продажи (ггггммддTччммcc)
     double s = 3;  // Сумма чека
     uint64 fn = 4; // Номер фискального накопителя
     uint64 i = 5;  // Номер фискального документа
