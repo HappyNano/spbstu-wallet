@@ -51,7 +51,7 @@ cp scripts/pre-commit/pre-commit .git/hooks/
 
 ### pre-commit hook:
 - Проверяет staged файлы на clang-format
-- Проверяет наличие новой строки в конце файла
+- Проверяет наличие новой строки в конце файла (trailing whitespaces)
 
 # Сборка
 
