@@ -1642,33 +1642,5 @@ void FinanceServiceImpl::setError(ResponseType * response, ErrorInfo::ErrorCode 
         errorInfo->set_details(details);
     }
 
-    if constexpr (std::is_same_v< ResponseType, AuthResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, ReceiptDetailsResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, ReceiptsResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, CreateTransactionResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, TransactionsResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, TransactionDetailsResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, CreateSplitResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, CharactersResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, ManageCharacterResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, CategoriesResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, ManageCategoryResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, StatisticsResponse >) {
-        response->set_allocated_error(errorInfo);
-    } else if constexpr (std::is_same_v< ResponseType, Response >) {
-        response->set_allocated_error(errorInfo);
-    } else {
-        delete errorInfo;
-    }
+    response->set_allocated_error(errorInfo);
 }
