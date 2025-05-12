@@ -17,34 +17,27 @@ using google::protobuf::util::TimeUtil;
 
 namespace {
 
-    // Вспомогательная функция для преобразования строкового timestamp из PostgreSQL в google::protobuf::Timestamp
     Timestamp stringToProtoTimestamp(const std::string & timestampStr) {
         Timestamp protoTimestamp;
 
-        // PostgreSQL формат timestamp с timezone обычно: YYYY-MM-DD HH:MM:SS.uuuuuu+TZ
-        // Упрощенный парсинг для прототипа (в реальном приложении используйте более надежный парсер)
         struct tm tm = {};
         char buffer[100];
         strncpy(buffer, timestampStr.c_str(), sizeof(buffer) - 1);
         buffer[sizeof(buffer) - 1] = '\0';
 
-        // Обрезаем дробную часть секунд и timezone, если они есть
         char * pos = strchr(buffer, '.');
         if (pos != nullptr) {
-            *pos = '\0'; // Обрезаем на точке
+            *pos = '\0';
         }
 
-        // Пытаемся распарсить дату и время
         if (strptime(buffer, "%Y-%m-%d %H:%M:%S", &tm) != nullptr || strptime(buffer, "%Y-%m-%dT%H:%M:%S", &tm) != nullptr) {
 
-            // Преобразуем в time_t
             time_t time = mktime(&tm);
 
-            // Установка времени в Timestamp
             protoTimestamp.set_seconds(time);
-            protoTimestamp.set_nanos(0); // Микросекунды не учитываем для простоты
+            protoTimestamp.set_nanos(0);
         } else {
-            // В случае ошибки возвращаем текущее время
+
             time_t now = time(nullptr);
             protoTimestamp.set_seconds(now);
             protoTimestamp.set_nanos(0);
@@ -53,7 +46,6 @@ namespace {
         return protoTimestamp;
     }
 
-    // Helper для определения типа данных в std::variant
     template < class... Ts >
     struct Overloaded: Ts... {
         using Ts::operator()...;
@@ -61,7 +53,6 @@ namespace {
     template < class... Ts >
     Overloaded(Ts...) -> Overloaded< Ts... >;
 
-    // Helper для получения значения из std::variant
     template < typename T >
     T getVariantValue(const std::variant< int, double, std::string, bool > & value) {
         return std::visit(
@@ -100,7 +91,7 @@ namespace {
          value);
     }
 
-} // unnamed namespace
+}
 
 FinanceServiceImpl::FinanceServiceImpl(std::shared_ptr< cxx::IDatabase > db)
   : db_(std::move(db)) {
@@ -111,7 +102,6 @@ bool FinanceServiceImpl::authenticateUser(const std::string & token, int32_t & u
         return false;
     }
 
-    // Запрос к базе данных для проверки токена
     try {
         std::string query = "SELECT id FROM users WHERE token = '" + db_->escapeString(token) + "'";
 
@@ -124,7 +114,7 @@ bool FinanceServiceImpl::authenticateUser(const std::string & token, int32_t & u
         userId = getVariantValue< int32_t >(resultOpt.value()[0][0]);
         return true;
     } catch (const std::exception & e) {
-        // Логирование ошибки
+
         return false;
     }
 }
@@ -139,10 +129,8 @@ grpc::Status FinanceServiceImpl::Authenticate(grpc::ServerContext * /*context*/,
             return grpc::Status::OK;
         }
 
-        // Генерация нового токена или поиск существующего
         std::string token;
 
-        // Пытаемся найти существующий токен для устройства
         std::string query = "SELECT u.token FROM users u JOIN users_data ud ON u.id = ud.user_id "
                             "WHERE ud.device_id = '"
                           + db_->escapeString(deviceId) + "' LIMIT 1";
@@ -150,13 +138,12 @@ grpc::Status FinanceServiceImpl::Authenticate(grpc::ServerContext * /*context*/,
         auto resultOpt = db_->makeTransaction()->executeQuery(query);
 
         if (resultOpt.has_value() && !resultOpt.value().empty()) {
-            // Пользователь существует - возвращаем существующий токен
+
             token = getVariantValue< std::string >(resultOpt.value()[0][0]);
         } else {
-            // Генерируем новый токен (например, UUID)
-            token = "generated_token_" + deviceId; // В реальном проекте используйте UUID
 
-            // Создаем нового пользователя
+            token = "generated_token_" + deviceId;
+
             std::string createUserQuery = "SELECT add_user('" + db_->escapeString(token) + "')";
             auto userResultOpt = db_->makeTransaction()->executeQuery(createUserQuery);
 
@@ -167,7 +154,6 @@ grpc::Status FinanceServiceImpl::Authenticate(grpc::ServerContext * /*context*/,
 
             auto userId = getVariantValue< int32_t >(userResultOpt.value()[0][0]);
 
-            // Заполняем данные пользователя
             std::string insertDataQuery = "INSERT INTO users_data (user_id, device_id, device_name) VALUES (" + std::to_string(userId) + ", '" + db_->escapeString(deviceId) + "', '" + db_->escapeString(deviceName) + "')";
 
             db_->makeTransaction()->executeQuery(insertDataQuery);
@@ -183,20 +169,18 @@ grpc::Status FinanceServiceImpl::Authenticate(grpc::ServerContext * /*context*/,
 
 grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/, const QRCodeRequest * request, ReceiptDetailsResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Переменные для хранения данных чека
         std::string date;
         int32_t sum;
         int64_t fn, fd, fp;
         int32_t type;
 
-        // Получаем данные из QR-кода или объекта Receipt
         Receipt receipt;
         bool parsed = false;
         if (request->has_qr_code_content()) {
@@ -210,7 +194,7 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
             parsed = true;
         }
         date = receipt.t();
-        // Преобразуем double в int32 (копейки)
+
         sum = static_cast< int32_t >(receipt.s() * 100);
         fn = receipt.fn();
         fd = receipt.i();
@@ -222,7 +206,6 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
             return grpc::Status::OK;
         }
 
-        // Сохраняем или обновляем информацию о чеке в базе данных
         std::string addReceiptQuery = "SELECT add_receipt('" + db_->escapeString(date) + "', " + std::to_string(sum) + ", " + std::to_string(fn) + ", " + std::to_string(fd) + ", " + std::to_string(fp) + ", " + std::to_string(type) + ")";
 
         auto transaction = db_->makeTransaction();
@@ -235,12 +218,10 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
 
         auto receiptId = getVariantValue< int32_t >(receiptResultOpt.value()[0][0]);
 
-        // Привязываем чек к пользователю
         std::string linkQuery = "SELECT link_receipt_to_user(" + std::to_string(userId) + ", " + std::to_string(receiptId) + ")";
 
         transaction->executeQuery(linkQuery);
 
-        // Создаем запрос для получения данных чека от OFD
         std::string requestQuery = "SELECT create_receipt_request(" + std::to_string(receiptId) + ")";
 
         auto requestResultOpt = transaction->executeQuery(requestQuery);
@@ -250,9 +231,6 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
             return grpc::Status::OK;
         }
 
-        // auto requestId = getVariantValue< int32_t >(requestResultOpt.value()[0][0]);
-
-        // Если нужно создать транзакцию на основе чека
         if (request->create_transaction()) {
             std::string comment = request->has_comment() ? request->comment() : "";
             int32_t categoryId = request->has_category_id() ? request->category_id() : 0;
@@ -262,20 +240,17 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
             transaction->executeQuery(createTransactionQuery);
         }
 
-        // Заполняем ответ с деталями чека в формате wallet.ReceiptData
         auto * receiptData = response->mutable_receipt_data();
 
-        // Заполняем базовые данные чека
         auto * receiptProto = receiptData->mutable_receipt();
         receiptProto->set_id(receiptId);
         receiptProto->set_t(date);
-        receiptProto->set_s(sum / 100.0); // Обратное преобразование из копеек в рубли
+        receiptProto->set_s(sum / 100.0);
         receiptProto->set_fn(fn);
         receiptProto->set_i(fd);
         receiptProto->set_fp(fp);
         receiptProto->set_n(type);
 
-        // Получаем данные о продавце и позициях
         std::string query = "SELECT rd.retailer_name, rd.retailer_place, rd.retailer_inn, rd.retailer_address, "
                             "rd.id as receipt_data_id "
                             "FROM receipt_data rd "
@@ -287,7 +262,6 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
         if (resultOpt.has_value() && !resultOpt.value().empty()) {
             const auto & row = resultOpt.value()[0];
 
-            // Заполняем данные о продавце
             auto * retailer = receiptData->mutable_retailer();
 
             if (row[0].index() != std::variant_npos) {
@@ -303,13 +277,11 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
                 retailer->set_address(getVariantValue< std::string >(row[3]));
             }
 
-            // Получаем ID данных чека
             int32_t receiptDataId = 0;
             if (row[4].index() != std::variant_npos) {
                 receiptDataId = getVariantValue< int32_t >(row[4]);
             }
 
-            // Если есть данные чека, получаем позиции
             if (receiptDataId > 0) {
                 std::string itemsQuery = "SELECT id, name, price, quantity, sum, nds_type, payment_type, product_type, measurement_unit "
                                          "FROM receipt_items "
@@ -327,11 +299,10 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
                         }
 
                         item->set_name(getVariantValue< std::string >(itemRow[1]));
-                        item->set_price(getVariantValue< double >(itemRow[2]) / 100.0); // копейки -> рубли
+                        item->set_price(getVariantValue< double >(itemRow[2]) / 100.0);
                         item->set_quantity(getVariantValue< double >(itemRow[3]));
-                        item->set_sum(getVariantValue< double >(itemRow[4]) / 100.0); // копейки -> рубли
+                        item->set_sum(getVariantValue< double >(itemRow[4]) / 100.0);
 
-                        // Преобразование типов enum
                         item->set_nds_type(static_cast< wallet::ReceiptItem::ENDSType >(getVariantValue< int32_t >(itemRow[5])));
                         item->set_payment_type(static_cast< wallet::ReceiptItem::EPaymentType >(getVariantValue< int32_t >(itemRow[6])));
                         item->set_product_type(static_cast< wallet::ReceiptItem::EProductType >(getVariantValue< int32_t >(itemRow[7])));
@@ -348,17 +319,15 @@ grpc::Status FinanceServiceImpl::ProcessQRCode(grpc::ServerContext * /*context*/
     }
 }
 
-// Пример реализации GetTransactions с использованием нового интерфейса DB
 grpc::Status FinanceServiceImpl::GetTransactions(grpc::ServerContext * /*context*/, const GetTransactionsRequest * request, TransactionsResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Параметры запроса
         std::string fromDate, toDate;
         if (request->has_from_date()) {
             fromDate = TimeUtil::ToString(request->from_date());
@@ -372,7 +341,6 @@ grpc::Status FinanceServiceImpl::GetTransactions(grpc::ServerContext * /*context
         int32_t limit = request->has_limit() ? request->limit() : 50;
         int32_t offset = request->has_offset() ? request->offset() : 0;
 
-        // Формируем SQL-запрос для получения транзакций
         std::stringstream sql;
         sql << "SELECT t.id, t.timestamp, t.type, t.amount, t.category_id, c.name, "
                "t.receipt_id, t.comment, "
@@ -401,11 +369,9 @@ grpc::Status FinanceServiceImpl::GetTransactions(grpc::ServerContext * /*context
         sql << "ORDER BY t.timestamp DESC ";
         sql << "LIMIT " << limit << " OFFSET " << offset;
 
-        // Выполняем запрос
         auto transaction = db_->makeTransaction();
         auto resultOpt = transaction->executeQuery(sql.str());
 
-        // Формируем ответ
         auto * transactionsList = response->mutable_transactions();
 
         if (resultOpt.has_value()) {
@@ -413,7 +379,6 @@ grpc::Status FinanceServiceImpl::GetTransactions(grpc::ServerContext * /*context
                 auto * transaction = transactionsList->add_transactions();
                 transaction->set_id(getVariantValue< int32_t >(row[0]));
 
-                // Преобразуем строку timestamp в Timestamp
                 auto * timestamp = transaction->mutable_timestamp();
                 *timestamp = stringToProtoTimestamp(getVariantValue< std::string >(row[1]));
 
@@ -440,7 +405,6 @@ grpc::Status FinanceServiceImpl::GetTransactions(grpc::ServerContext * /*context
             }
         }
 
-        // Получаем общее количество транзакций для пагинации
         std::stringstream countSql;
         countSql << "SELECT COUNT(*) FROM transactions t WHERE t.user_id = " << userId << " ";
 
@@ -465,7 +429,6 @@ grpc::Status FinanceServiceImpl::GetTransactions(grpc::ServerContext * /*context
             transactionsList->set_total_count(getVariantValue< int32_t >(countResultOpt.value()[0][0]));
         }
 
-        // Получаем суммарную статистику за период
         std::stringstream statsSql;
         statsSql << "SELECT "
                     "COALESCE(SUM(CASE WHEN type = 0 THEN amount ELSE 0 END), 0) as total_income, "
@@ -510,14 +473,13 @@ grpc::Status FinanceServiceImpl::GetTransactions(grpc::ServerContext * /*context
 
 grpc::Status FinanceServiceImpl::GetReceipts(grpc::ServerContext * /*context*/, const GetReceiptsRequest * request, ReceiptsResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Параметры запроса
         std::string fromDate, toDate;
         if (request->has_from_date()) {
             fromDate = TimeUtil::ToString(request->from_date());
@@ -529,7 +491,6 @@ grpc::Status FinanceServiceImpl::GetReceipts(grpc::ServerContext * /*context*/, 
         int32_t limit = request->has_limit() ? request->limit() : 50;
         int32_t offset = request->has_offset() ? request->offset() : 0;
 
-        // Формируем SQL-запрос
         std::stringstream sql;
         sql << "SELECT r.id, r.t, r.s, r.n, rd.retailer_name, "
                "(SELECT COUNT(*) FROM receipt_items ri WHERE ri.receipt_data_id = rd.id), "
@@ -551,11 +512,9 @@ grpc::Status FinanceServiceImpl::GetReceipts(grpc::ServerContext * /*context*/, 
         sql << "ORDER BY r.t DESC ";
         sql << "LIMIT " << limit << " OFFSET " << offset;
 
-        // Выполняем запрос
         auto transaction = db_->makeTransaction();
         auto resultOpt = transaction->executeQuery(sql.str());
 
-        // Формируем ответ
         auto * receiptsList = response->mutable_receipts();
 
         if (resultOpt.has_value()) {
@@ -575,7 +534,6 @@ grpc::Status FinanceServiceImpl::GetReceipts(grpc::ServerContext * /*context*/, 
             }
         }
 
-        // Получаем общее количество чеков для пагинации
         std::string countQuery = "SELECT COUNT(*) FROM user_receipts WHERE user_id = " + std::to_string(userId);
         auto countResultOpt = transaction->executeQuery(countQuery);
 
@@ -592,7 +550,7 @@ grpc::Status FinanceServiceImpl::GetReceipts(grpc::ServerContext * /*context*/, 
 
 grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*context*/, const GetReceiptDetailsRequest * request, ReceiptDetailsResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -601,7 +559,6 @@ grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*conte
 
         int32_t receiptId = request->receipt_id();
 
-        // Проверяем, принадлежит ли чек пользователю
         std::string accessQuery = "SELECT 1 FROM user_receipts WHERE user_id = " + std::to_string(userId) + " AND receipt_id = " + std::to_string(receiptId);
 
         auto accessResultOpt = db_->makeTransaction()->executeQuery(accessQuery);
@@ -611,7 +568,6 @@ grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*conte
             return grpc::Status::OK;
         }
 
-        // Получаем основные данные чека
         std::string query = "SELECT r.id, r.t, r.s, r.fn, r.i, r.fp, r.n, "
                             "rd.retailer_name, rd.retailer_place, rd.retailer_inn, rd.retailer_address, "
                             "rd.id as receipt_data_id "
@@ -629,20 +585,17 @@ grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*conte
 
         const auto & row = resultOpt.value()[0];
 
-        // Заполняем ответ с деталями чека в формате wallet.ReceiptData
         auto * receiptData = response->mutable_receipt_data();
 
-        // Заполняем базовые данные чека
         auto * receiptProto = receiptData->mutable_receipt();
         receiptProto->set_id(receiptId);
         receiptProto->set_t(getVariantValue< std::string >(row[1]));
-        receiptProto->set_s(getVariantValue< double >(row[2]) / 100.0); // копейки -> рубли
+        receiptProto->set_s(getVariantValue< double >(row[2]) / 100.0);
         receiptProto->set_fn(getVariantValue< uint64_t >(row[3]));
         receiptProto->set_i(getVariantValue< uint64_t >(row[4]));
         receiptProto->set_fp(getVariantValue< uint64_t >(row[5]));
         receiptProto->set_n(getVariantValue< int32_t >(row[6]));
 
-        // Заполняем данные о продавце
         auto * retailer = receiptData->mutable_retailer();
 
         if (row[7].index() != std::variant_npos) {
@@ -658,13 +611,11 @@ grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*conte
             retailer->set_address(getVariantValue< std::string >(row[10]));
         }
 
-        // Получаем ID данных чека
         int32_t receiptDataId = 0;
         if (row[11].index() != std::variant_npos) {
             receiptDataId = getVariantValue< int32_t >(row[11]);
         }
 
-        // Если есть данные чека, получаем позиции
         if (receiptDataId > 0) {
             std::string itemsQuery = "SELECT id, name, price, quantity, sum, nds_type, payment_type, product_type, measurement_unit "
                                      "FROM receipt_items "
@@ -682,11 +633,10 @@ grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*conte
                     }
 
                     item->set_name(getVariantValue< std::string >(itemRow[1]));
-                    item->set_price(getVariantValue< double >(itemRow[2]) / 100.0); // копейки -> рубли
+                    item->set_price(getVariantValue< double >(itemRow[2]) / 100.0);
                     item->set_quantity(getVariantValue< double >(itemRow[3]));
-                    item->set_sum(getVariantValue< double >(itemRow[4]) / 100.0); // копейки -> рубли
+                    item->set_sum(getVariantValue< double >(itemRow[4]) / 100.0);
 
-                    // Преобразование типов enum
                     item->set_nds_type(static_cast< wallet::ReceiptItem::ENDSType >(getVariantValue< int32_t >(itemRow[5])));
                     item->set_payment_type(static_cast< wallet::ReceiptItem::EPaymentType >(getVariantValue< int32_t >(itemRow[6])));
                     item->set_product_type(static_cast< wallet::ReceiptItem::EProductType >(getVariantValue< int32_t >(itemRow[7])));
@@ -695,12 +645,10 @@ grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*conte
             }
         }
 
-        // Проверяем, есть ли связанная транзакция
         std::string transactionQuery = "SELECT id FROM transactions WHERE receipt_id = " + std::to_string(receiptId) + " LIMIT 1";
 
         auto transactionResultOpt = db_->makeTransaction()->executeQuery(transactionQuery);
 
-        // Добавляем дополнительную информацию
         if (transactionResultOpt.has_value() && !transactionResultOpt.value().empty()) {
             auto transactionId = getVariantValue< int32_t >(transactionResultOpt.value()[0][0]);
             auto * additionalInfo = receiptData->mutable_additional_info();
@@ -716,7 +664,7 @@ grpc::Status FinanceServiceImpl::GetReceiptDetails(grpc::ServerContext * /*conte
 
 grpc::Status FinanceServiceImpl::CreateTransaction(grpc::ServerContext * /*context*/, const CreateTransactionRequest * request, CreateTransactionResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -725,7 +673,6 @@ grpc::Status FinanceServiceImpl::CreateTransaction(grpc::ServerContext * /*conte
 
         const auto & transaction = request->transaction();
 
-        // Проверка обязательных полей
         if (transaction.type() != 0 && transaction.type() != 1) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Invalid transaction type");
             return grpc::Status::OK;
@@ -736,14 +683,12 @@ grpc::Status FinanceServiceImpl::CreateTransaction(grpc::ServerContext * /*conte
             return grpc::Status::OK;
         }
 
-        // Формируем SQL-запрос для функции add_transaction
         std::stringstream sql;
         sql << "SELECT add_transaction(" << userId << ", "
             << transaction.type() << ", "
             << transaction.amount() << ", '"
             << db_->escapeString(TimeUtil::ToString(transaction.timestamp())) << "'";
 
-        // Добавляем опциональные параметры
         if (transaction.has_category_id()) {
             sql << ", " << transaction.category_id();
         } else {
@@ -764,7 +709,6 @@ grpc::Status FinanceServiceImpl::CreateTransaction(grpc::ServerContext * /*conte
 
         sql << ")";
 
-        // Выполняем запрос
         auto resultOpt = db_->makeTransaction()->executeQuery(sql.str());
 
         if (!resultOpt.has_value() || resultOpt.value().empty()) {
@@ -772,7 +716,6 @@ grpc::Status FinanceServiceImpl::CreateTransaction(grpc::ServerContext * /*conte
             return grpc::Status::OK;
         }
 
-        // Получаем ID созданной транзакции
         auto transactionId = getVariantValue< int32_t >(resultOpt.value()[0][0]);
         response->set_transaction_id(transactionId);
 
@@ -785,7 +728,7 @@ grpc::Status FinanceServiceImpl::CreateTransaction(grpc::ServerContext * /*conte
 
 grpc::Status FinanceServiceImpl::UpdateTransaction(grpc::ServerContext * /*context*/, const UpdateTransactionRequest * request, Response * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -794,7 +737,6 @@ grpc::Status FinanceServiceImpl::UpdateTransaction(grpc::ServerContext * /*conte
 
         const auto & transaction = request->transaction();
 
-        // Проверка обязательных полей
         if (!transaction.has_id()) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Transaction ID is required");
             return grpc::Status::OK;
@@ -810,7 +752,6 @@ grpc::Status FinanceServiceImpl::UpdateTransaction(grpc::ServerContext * /*conte
             return grpc::Status::OK;
         }
 
-        // Проверяем, принадлежит ли транзакция пользователю
         std::string accessQuery = "SELECT 1 FROM transactions WHERE id = " + std::to_string(transaction.id()) + " AND user_id = " + std::to_string(userId);
 
         auto accessResultOpt = db_->makeTransaction()->executeQuery(accessQuery);
@@ -820,7 +761,6 @@ grpc::Status FinanceServiceImpl::UpdateTransaction(grpc::ServerContext * /*conte
             return grpc::Status::OK;
         }
 
-        // Обновляем транзакцию
         std::stringstream sql;
         sql << "UPDATE transactions SET "
                "type = "
@@ -850,10 +790,8 @@ grpc::Status FinanceServiceImpl::UpdateTransaction(grpc::ServerContext * /*conte
 
         sql << " WHERE id = " << transaction.id();
 
-        // Выполняем запрос на обновление
         db_->makeTransaction()->executeQuery(sql.str());
 
-        // Устанавливаем успешный ответ
         response->mutable_success();
 
         return grpc::Status::OK;
@@ -865,7 +803,7 @@ grpc::Status FinanceServiceImpl::UpdateTransaction(grpc::ServerContext * /*conte
 
 grpc::Status FinanceServiceImpl::DeleteTransaction(grpc::ServerContext * /*context*/, const DeleteTransactionRequest * request, Response * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -874,7 +812,6 @@ grpc::Status FinanceServiceImpl::DeleteTransaction(grpc::ServerContext * /*conte
 
         int32_t transactionId = request->transaction_id();
 
-        // Проверяем, принадлежит ли транзакция пользователю
         std::string accessQuery = "SELECT 1 FROM transactions WHERE id = " + std::to_string(transactionId) + " AND user_id = " + std::to_string(userId);
 
         auto accessResultOpt = db_->makeTransaction()->executeQuery(accessQuery);
@@ -886,7 +823,6 @@ grpc::Status FinanceServiceImpl::DeleteTransaction(grpc::ServerContext * /*conte
 
         auto transaction = db_->makeTransaction();
 
-        // Удаляем сначала разделения транзакции, затем саму транзакцию
         std::string deleteSplitsQuery = "DELETE FROM transaction_splits WHERE transaction_id = " + std::to_string(transactionId);
 
         transaction->executeQuery(deleteSplitsQuery);
@@ -895,7 +831,6 @@ grpc::Status FinanceServiceImpl::DeleteTransaction(grpc::ServerContext * /*conte
 
         transaction->executeQuery(deleteTransactionQuery);
 
-        // Устанавливаем успешный ответ
         response->mutable_success();
 
         return grpc::Status::OK;
@@ -907,7 +842,7 @@ grpc::Status FinanceServiceImpl::DeleteTransaction(grpc::ServerContext * /*conte
 
 bool FinanceServiceImpl::getTransactionData(int32_t transactionId, TransactionDetails * details) {
     try {
-        // Получаем основные данные транзакции
+
         std::string query = "SELECT t.id, t.timestamp, t.type, t.amount, t.category_id, c.name, "
                             "t.receipt_id, t.comment "
                             "FROM transactions t "
@@ -925,7 +860,6 @@ bool FinanceServiceImpl::getTransactionData(int32_t transactionId, TransactionDe
 
         details->set_id(transactionId);
 
-        // Преобразуем строку timestamp в Timestamp
         auto * timestamp = details->mutable_timestamp();
         *timestamp = stringToProtoTimestamp(getVariantValue< std::string >(row[1]));
 
@@ -944,7 +878,6 @@ bool FinanceServiceImpl::getTransactionData(int32_t transactionId, TransactionDe
             auto receiptId = getVariantValue< int32_t >(row[6]);
             details->set_receipt_id(receiptId);
 
-            // Получаем данные чека для этой транзакции
             std::string receiptQuery = "SELECT r.id, r.t, r.s, r.n, rd.retailer_name, "
                                        "(SELECT COUNT(*) FROM receipt_items ri WHERE ri.receipt_data_id = rd.id) "
                                        "FROM receipts r "
@@ -975,7 +908,6 @@ bool FinanceServiceImpl::getTransactionData(int32_t transactionId, TransactionDe
             details->set_comment(getVariantValue< std::string >(row[7]));
         }
 
-        // Получаем деления транзакции
         std::string splitsQuery = "SELECT ts.id, ts.character_id, uc.name, ts.amount, ts.comment "
                                   "FROM transaction_splits ts "
                                   "JOIN user_characters uc ON uc.id = ts.character_id "
@@ -1001,14 +933,14 @@ bool FinanceServiceImpl::getTransactionData(int32_t transactionId, TransactionDe
 
         return true;
     } catch (const std::exception & e) {
-        // Логирование ошибки
+
         return false;
     }
 }
 
 grpc::Status FinanceServiceImpl::GetTransactionDetails(grpc::ServerContext * /*context*/, const GetTransactionDetailsRequest * request, TransactionDetailsResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -1017,7 +949,6 @@ grpc::Status FinanceServiceImpl::GetTransactionDetails(grpc::ServerContext * /*c
 
         int32_t transactionId = request->transaction_id();
 
-        // Проверяем, принадлежит ли транзакция пользователю
         std::string accessQuery = "SELECT 1 FROM transactions WHERE id = " + std::to_string(transactionId) + " AND user_id = " + std::to_string(userId);
 
         auto accessResultOpt = db_->makeTransaction()->executeQuery(accessQuery);
@@ -1027,7 +958,6 @@ grpc::Status FinanceServiceImpl::GetTransactionDetails(grpc::ServerContext * /*c
             return grpc::Status::OK;
         }
 
-        // Получаем данные транзакции
         if (!getTransactionData(transactionId, response->mutable_transaction())) {
             setError(response, ErrorInfo::NOT_FOUND, "Transaction details not found");
             return grpc::Status::OK;
@@ -1042,7 +972,7 @@ grpc::Status FinanceServiceImpl::GetTransactionDetails(grpc::ServerContext * /*c
 
 grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, const CreateSplitRequest * request, CreateSplitResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -1051,7 +981,6 @@ grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, 
 
         const auto & split = request->split();
 
-        // Проверка обязательных полей
         if (split.transaction_id() <= 0) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Transaction ID is required");
             return grpc::Status::OK;
@@ -1067,7 +996,6 @@ grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, 
             return grpc::Status::OK;
         }
 
-        // Проверяем, принадлежит ли транзакция пользователю
         std::string transactionQuery = "SELECT 1 FROM transactions WHERE id = " + std::to_string(split.transaction_id()) + " AND user_id = " + std::to_string(userId);
 
         auto transactionResultOpt = db_->makeTransaction()->executeQuery(transactionQuery);
@@ -1077,7 +1005,6 @@ grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, 
             return grpc::Status::OK;
         }
 
-        // Проверяем, принадлежит ли персонаж пользователю
         std::string characterQuery = "SELECT 1 FROM user_characters WHERE id = " + std::to_string(split.character_id()) + " AND user_id = " + std::to_string(userId);
 
         auto characterResultOpt = db_->makeTransaction()->executeQuery(characterQuery);
@@ -1087,7 +1014,6 @@ grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, 
             return grpc::Status::OK;
         }
 
-        // Создаем деление транзакции
         std::stringstream sql;
         sql << "SELECT add_transaction_split("
             << split.transaction_id() << ", "
@@ -1102,7 +1028,6 @@ grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, 
 
         sql << ")";
 
-        // Выполняем запрос
         auto resultOpt = db_->makeTransaction()->executeQuery(sql.str());
 
         if (!resultOpt.has_value() || resultOpt.value().empty()) {
@@ -1110,7 +1035,6 @@ grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, 
             return grpc::Status::OK;
         }
 
-        // Получаем ID созданного деления
         auto splitId = getVariantValue< int32_t >(resultOpt.value()[0][0]);
         response->set_split_id(splitId);
 
@@ -1123,7 +1047,7 @@ grpc::Status FinanceServiceImpl::CreateSplit(grpc::ServerContext * /*context*/, 
 
 grpc::Status FinanceServiceImpl::UpdateSplit(grpc::ServerContext * /*context*/, const UpdateSplitRequest * request, Response * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -1132,7 +1056,6 @@ grpc::Status FinanceServiceImpl::UpdateSplit(grpc::ServerContext * /*context*/, 
 
         const auto & split = request->split();
 
-        // Проверка обязательных полей
         if (!split.has_id()) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Split ID is required");
             return grpc::Status::OK;
@@ -1143,7 +1066,6 @@ grpc::Status FinanceServiceImpl::UpdateSplit(grpc::ServerContext * /*context*/, 
             return grpc::Status::OK;
         }
 
-        // Проверяем, принадлежит ли деление транзакции пользователю
         std::string accessQuery = "SELECT 1 FROM transaction_splits ts "
                                   "JOIN transactions t ON t.id = ts.transaction_id "
                                   "WHERE ts.id = "
@@ -1156,7 +1078,6 @@ grpc::Status FinanceServiceImpl::UpdateSplit(grpc::ServerContext * /*context*/, 
             return grpc::Status::OK;
         }
 
-        // Обновляем деление
         std::stringstream sql;
         sql << "UPDATE transaction_splits SET amount = " << split.amount();
 
@@ -1166,10 +1087,8 @@ grpc::Status FinanceServiceImpl::UpdateSplit(grpc::ServerContext * /*context*/, 
 
         sql << " WHERE id = " << split.id();
 
-        // Выполняем запрос на обновление
         db_->makeTransaction()->executeQuery(sql.str());
 
-        // Устанавливаем успешный ответ
         response->mutable_success();
 
         return grpc::Status::OK;
@@ -1181,7 +1100,7 @@ grpc::Status FinanceServiceImpl::UpdateSplit(grpc::ServerContext * /*context*/, 
 
 grpc::Status FinanceServiceImpl::DeleteSplit(grpc::ServerContext * /*context*/, const DeleteSplitRequest * request, Response * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
@@ -1190,7 +1109,6 @@ grpc::Status FinanceServiceImpl::DeleteSplit(grpc::ServerContext * /*context*/, 
 
         int32_t splitId = request->split_id();
 
-        // Проверяем, принадлежит ли деление транзакции пользователю
         std::string accessQuery = "SELECT 1 FROM transaction_splits ts "
                                   "JOIN transactions t ON t.id = ts.transaction_id "
                                   "WHERE ts.id = "
@@ -1203,11 +1121,9 @@ grpc::Status FinanceServiceImpl::DeleteSplit(grpc::ServerContext * /*context*/, 
             return grpc::Status::OK;
         }
 
-        // Удаляем деление
         std::string deleteQuery = "DELETE FROM transaction_splits WHERE id = " + std::to_string(splitId);
         db_->makeTransaction()->executeQuery(deleteQuery);
 
-        // Устанавливаем успешный ответ
         response->mutable_success();
 
         return grpc::Status::OK;
@@ -1219,19 +1135,17 @@ grpc::Status FinanceServiceImpl::DeleteSplit(grpc::ServerContext * /*context*/, 
 
 grpc::Status FinanceServiceImpl::GetCharacters(grpc::ServerContext * /*context*/, const GetCharactersRequest * request, CharactersResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Получаем список персонажей пользователя
         std::string query = "SELECT id, name FROM user_characters WHERE user_id = " + std::to_string(userId) + " ORDER BY id";
 
         auto resultOpt = db_->makeTransaction()->executeQuery(query);
 
-        // Заполняем ответ
         auto * charactersList = response->mutable_characters_list();
         if (resultOpt.has_value()) {
             for (const auto & row: resultOpt.value()) {
@@ -1250,25 +1164,22 @@ grpc::Status FinanceServiceImpl::GetCharacters(grpc::ServerContext * /*context*/
 
 grpc::Status FinanceServiceImpl::ManageCharacter(grpc::ServerContext * /*context*/, const ManageCharacterRequest * request, ManageCharacterResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Проверяем наличие имени персонажа
         if (request->name().empty()) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Character name is required");
             return grpc::Status::OK;
         }
 
         if (request->has_id()) {
-            // Это запрос на обновление существующего персонажа
+
             int32_t characterId = request->id();
 
-            // Проверяем, принадлежит ли персонаж пользователю
-            // Проверяем, принадлежит ли персонаж пользователю
             std::string accessQuery = "SELECT 1 FROM user_characters WHERE id = " + std::to_string(characterId) + " AND user_id = " + std::to_string(userId);
 
             auto accessResultOpt = db_->makeTransaction()->executeQuery(accessQuery);
@@ -1278,15 +1189,13 @@ grpc::Status FinanceServiceImpl::ManageCharacter(grpc::ServerContext * /*context
                 return grpc::Status::OK;
             }
 
-            // Обновляем имя персонажа
             std::string updateQuery = "UPDATE user_characters SET name = '" + db_->escapeString(request->name()) + "' WHERE id = " + std::to_string(characterId) + " AND user_id = " + std::to_string(userId);
 
             db_->makeTransaction()->executeQuery(updateQuery);
 
-            // Устанавливаем ID обновленного персонажа в ответ
             response->set_character_id(characterId);
         } else {
-            // Это запрос на создание нового персонажа
+
             std::string createQuery = "SELECT add_user_character(" + std::to_string(userId) + ", '" + db_->escapeString(request->name()) + "')";
 
             auto resultOpt = db_->makeTransaction()->executeQuery(createQuery);
@@ -1309,14 +1218,13 @@ grpc::Status FinanceServiceImpl::ManageCharacter(grpc::ServerContext * /*context
 
 grpc::Status FinanceServiceImpl::DeleteCharacter(grpc::ServerContext * /*context*/, const ManageCharacterRequest * request, Response * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Проверяем наличие ID персонажа
         if (!request->has_id()) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Character ID is required");
             return grpc::Status::OK;
@@ -1324,7 +1232,6 @@ grpc::Status FinanceServiceImpl::DeleteCharacter(grpc::ServerContext * /*context
 
         int32_t characterId = request->id();
 
-        // Проверяем, принадлежит ли персонаж пользователю
         std::string accessQuery = "SELECT name FROM user_characters WHERE id = " + std::to_string(characterId) + " AND user_id = " + std::to_string(userId);
 
         auto accessResultOpt = db_->makeTransaction()->executeQuery(accessQuery);
@@ -1334,7 +1241,6 @@ grpc::Status FinanceServiceImpl::DeleteCharacter(grpc::ServerContext * /*context
             return grpc::Status::OK;
         }
 
-        // Проверяем, не является ли персонаж "Основным"
         auto characterName = getVariantValue< std::string >(accessResultOpt.value()[0][0]);
         if (characterName == "Основной") {
             setError(response, ErrorInfo::INVALID_REQUEST, "Cannot delete the main character");
@@ -1343,17 +1249,14 @@ grpc::Status FinanceServiceImpl::DeleteCharacter(grpc::ServerContext * /*context
 
         auto transaction = db_->makeTransaction();
 
-        // Удаляем деления транзакций, связанные с этим персонажем
         std::string deleteSplitsQuery = "DELETE FROM transaction_splits WHERE character_id = " + std::to_string(characterId);
 
         transaction->executeQuery(deleteSplitsQuery);
 
-        // Удаляем персонажа
         std::string deleteCharacterQuery = "DELETE FROM user_characters WHERE id = " + std::to_string(characterId) + " AND user_id = " + std::to_string(userId);
 
         transaction->executeQuery(deleteCharacterQuery);
 
-        // Устанавливаем успешный ответ
         response->mutable_success();
 
         return grpc::Status::OK;
@@ -1365,19 +1268,17 @@ grpc::Status FinanceServiceImpl::DeleteCharacter(grpc::ServerContext * /*context
 
 grpc::Status FinanceServiceImpl::GetCategories(grpc::ServerContext * /*context*/, const GetCategoriesRequest * request, CategoriesResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Получаем список всех категорий
         std::string query = "SELECT id, name FROM categories ORDER BY name";
 
         auto resultOpt = db_->makeTransaction()->executeQuery(query);
 
-        // Заполняем ответ
         auto * categoriesList = response->mutable_categories_list();
         if (resultOpt.has_value()) {
             for (const auto & row: resultOpt.value()) {
@@ -1396,24 +1297,22 @@ grpc::Status FinanceServiceImpl::GetCategories(grpc::ServerContext * /*context*/
 
 grpc::Status FinanceServiceImpl::ManageCategory(grpc::ServerContext * /*context*/, const ManageCategoryRequest * request, ManageCategoryResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Проверяем наличие названия категории
         if (request->name().empty()) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Category name is required");
             return grpc::Status::OK;
         }
 
         if (request->has_id()) {
-            // Это запрос на обновление существующей категории
+
             int32_t categoryId = request->id();
 
-            // Проверяем существование категории
             std::string categoryQuery = "SELECT 1 FROM categories WHERE id = " + std::to_string(categoryId);
 
             auto categoryResultOpt = db_->makeTransaction()->executeQuery(categoryQuery);
@@ -1423,15 +1322,13 @@ grpc::Status FinanceServiceImpl::ManageCategory(grpc::ServerContext * /*context*
                 return grpc::Status::OK;
             }
 
-            // Обновляем название категории
             std::string updateQuery = "UPDATE categories SET name = '" + db_->escapeString(request->name()) + "' WHERE id = " + std::to_string(categoryId);
 
             db_->makeTransaction()->executeQuery(updateQuery);
 
-            // Устанавливаем ID обновленной категории в ответ
             response->set_category_id(categoryId);
         } else {
-            // Это запрос на создание новой категории
+
             std::string createQuery = "SELECT add_category('" + db_->escapeString(request->name()) + "')";
 
             auto resultOpt = db_->makeTransaction()->executeQuery(createQuery);
@@ -1454,14 +1351,13 @@ grpc::Status FinanceServiceImpl::ManageCategory(grpc::ServerContext * /*context*
 
 grpc::Status FinanceServiceImpl::DeleteCategory(grpc::ServerContext * /*context*/, const ManageCategoryRequest * request, Response * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Проверяем наличие ID категории
         if (!request->has_id()) {
             setError(response, ErrorInfo::INVALID_REQUEST, "Category ID is required");
             return grpc::Status::OK;
@@ -1469,7 +1365,6 @@ grpc::Status FinanceServiceImpl::DeleteCategory(grpc::ServerContext * /*context*
 
         int32_t categoryId = request->id();
 
-        // Проверяем существование категории
         std::string categoryQuery = "SELECT 1 FROM categories WHERE id = " + std::to_string(categoryId);
 
         auto categoryResultOpt = db_->makeTransaction()->executeQuery(categoryQuery);
@@ -1481,17 +1376,14 @@ grpc::Status FinanceServiceImpl::DeleteCategory(grpc::ServerContext * /*context*
 
         auto transaction = db_->makeTransaction();
 
-        // Удаляем ссылки на категорию в транзакциях
         std::string updateTransactionsQuery = "UPDATE transactions SET category_id = NULL WHERE category_id = " + std::to_string(categoryId);
 
         transaction->executeQuery(updateTransactionsQuery);
 
-        // Удаляем категорию
         std::string deleteCategoryQuery = "DELETE FROM categories WHERE id = " + std::to_string(categoryId);
 
         transaction->executeQuery(deleteCategoryQuery);
 
-        // Устанавливаем успешный ответ
         response->mutable_success();
 
         return grpc::Status::OK;
@@ -1503,14 +1395,13 @@ grpc::Status FinanceServiceImpl::DeleteCategory(grpc::ServerContext * /*context*
 
 grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/, const GetStatisticsRequest * request, StatisticsResponse * response) {
     try {
-        // Проверка аутентификации
+
         int32_t userId;
         if (!authenticateUser(request->auth().token(), userId)) {
             setError(response, ErrorInfo::UNAUTHORIZED, "Invalid token");
             return grpc::Status::OK;
         }
 
-        // Параметры запроса
         std::string fromDate, toDate;
         if (request->has_from_date()) {
             fromDate = TimeUtil::ToString(request->from_date());
@@ -1521,7 +1412,6 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
 
         auto * statistics = response->mutable_statistics();
 
-        // 1. Получаем общую статистику по доходам и расходам
         std::stringstream sql;
         sql << "SELECT "
                "COALESCE(SUM(CASE WHEN type = 0 THEN amount ELSE 0 END), 0) as total_income, "
@@ -1559,7 +1449,6 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
 
         auto * chartData = statistics->mutable_chart_data();
 
-        // 2. Получаем ежедневные данные для графика
         std::stringstream dailySql;
         dailySql << "SELECT "
                     "TO_CHAR(timestamp, 'YYYY-MM-DD') as date, "
@@ -1591,7 +1480,6 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
             }
         }
 
-        // 3. Получаем статистику расходов по категориям
         std::stringstream expenseCategorySql;
         expenseCategorySql << "SELECT "
                               "t.category_id, "
@@ -1627,14 +1515,12 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
             for (const auto & row: expenseCategoryResultOpt.value()) {
                 auto * categoryStats = chartData->add_expenses_by_category();
 
-                // Category ID может быть NULL, обрабатываем это
                 categoryStats->set_category_id(row[0].index() != std::variant_npos ? getVariantValue< int32_t >(row[0]) : 0);
 
                 categoryStats->set_category_name(getVariantValue< std::string >(row[1]));
                 categoryStats->set_transactions_count(getVariantValue< int32_t >(row[2]));
                 categoryStats->set_total_amount(getVariantValue< int32_t >(row[3]));
 
-                // Вычисляем процент от общей суммы
                 double percentage = 0.0;
                 if (totalExpenseAmount > 0) {
                     percentage = (static_cast< double >(getVariantValue< int32_t >(row[3])) / totalExpenseAmount) * 100.0;
@@ -1643,7 +1529,6 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
             }
         }
 
-        // 4. Получаем статистику доходов по категориям
         std::stringstream incomeCategorySql;
         incomeCategorySql << "SELECT "
                              "t.category_id, "
@@ -1679,14 +1564,12 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
             for (const auto & row: incomeCategoryResultOpt.value()) {
                 auto * categoryStats = chartData->add_incomes_by_category();
 
-                // Category ID может быть NULL, обрабатываем это
                 categoryStats->set_category_id(row[0].index() != std::variant_npos ? getVariantValue< int32_t >(row[0]) : 0);
 
                 categoryStats->set_category_name(getVariantValue< std::string >(row[1]));
                 categoryStats->set_transactions_count(getVariantValue< int32_t >(row[2]));
                 categoryStats->set_total_amount(getVariantValue< int32_t >(row[3]));
 
-                // Вычисляем процент от общей суммы
                 double percentage = 0.0;
                 if (totalIncomeAmount > 0) {
                     percentage = (static_cast< double >(getVariantValue< int32_t >(row[3])) / totalIncomeAmount) * 100.0;
@@ -1695,7 +1578,6 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
             }
         }
 
-        // 5. Получаем статистику расходов по персонажам
         std::stringstream characterSql;
         characterSql << "SELECT "
                         "uc.id as character_id, "
@@ -1736,7 +1618,6 @@ grpc::Status FinanceServiceImpl::GetStatistics(grpc::ServerContext * /*context*/
                 characterStats->set_splits_count(getVariantValue< int32_t >(row[2]));
                 characterStats->set_total_amount(getVariantValue< int32_t >(row[3]));
 
-                // Вычисляем процент от общей суммы
                 double percentage = 0.0;
                 if (totalCharacterAmount > 0) {
                     percentage = (static_cast< double >(getVariantValue< int32_t >(row[3])) / totalCharacterAmount) * 100.0;
@@ -1761,7 +1642,6 @@ void FinanceServiceImpl::setError(ResponseType * response, ErrorInfo::ErrorCode 
         errorInfo->set_details(details);
     }
 
-    // Проверяем, какое поле есть в ответе
     if constexpr (std::is_same_v< ResponseType, AuthResponse >) {
         response->set_allocated_error(errorInfo);
     } else if constexpr (std::is_same_v< ResponseType, ReceiptDetailsResponse >) {
