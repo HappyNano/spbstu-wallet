@@ -91,7 +91,7 @@ namespace {
          value);
     }
 
-}
+} // unnamed namespace
 
 FinanceServiceImpl::FinanceServiceImpl(std::shared_ptr< cxx::IDatabase > db)
   : db_(std::move(db)) {
