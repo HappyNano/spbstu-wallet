@@ -21,7 +21,7 @@ bool SQLiteDatabase::connect(const std::string & connectionInfo) {
     int rc = sqlite3_open(connectionInfo.c_str(), &conn_);
     if (rc != SQLITE_OK) {
         if (conn_) {
-            SPDLOG_ERROR("SQLite error: {}", sqlite3_errmsg(conn_));
+            SPDLOG_ERROR("SQLite error: {}", std::string(sqlite3_errmsg(conn_)));
             sqlite3_close(conn_);
             conn_ = nullptr;
         } else {

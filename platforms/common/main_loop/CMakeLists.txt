@@ -13,6 +13,7 @@ LIBS(
 
   ${OpenCV_LIBS}
   imgui::imgui
+  spdlog::spdlog
 )
 
 INCLUDEDIRS(
