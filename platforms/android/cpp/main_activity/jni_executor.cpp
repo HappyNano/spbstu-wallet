@@ -23,7 +23,7 @@ cxx::JNIExecutor::JNIExecutor(JavaVM * javaVm, jobject javaClassObject, std::str
 cxx::JNIExecutor::~JNIExecutor() {
     jint jniReturn = javaVm_->DetachCurrentThread();
     if (jniReturn != JNI_OK) { // for noexcept
-        SPDLOG_ERROR("%s", "~Executor:: Can't detach current thread");
+        SPDLOG_ERROR("~Executor:: Can't detach current thread");
     }
 }
 

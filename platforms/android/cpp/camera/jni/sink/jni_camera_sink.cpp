@@ -10,6 +10,6 @@ auto cxx::JniCameraSink::loadNewFrameFromJni(jbyte * data, int width, int height
     memcpy(newData.get(), data, size);
 
     auto newFrame = std::make_shared< Frame >(std::move(newData), width, height, channels);
-    SPDLOG_INFO("JniCameraSink: New data width {} height {} addr {}", width, height, (unsigned long long)newFrame.get());
+    SPDLOG_INFO("JniCameraSink: New data width " + std::to_string(width) + " height " + std::to_string(height) + " addr " + std::to_string((unsigned long long)newFrame.get()));
     loadNewFrame(newFrame);
 }

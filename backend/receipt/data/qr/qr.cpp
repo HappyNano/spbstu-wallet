@@ -33,7 +33,7 @@ wallet::Receipt wallet::parseQRDataFromString(const std::string & data) {
     std::vector< std::string > missingFields;
 
     for (const auto & field: requiredFields) {
-        if (params.find(field) == params.end()) {
+        if (!params.contains(field)) {
             missingFields.push_back(field);
         }
     }

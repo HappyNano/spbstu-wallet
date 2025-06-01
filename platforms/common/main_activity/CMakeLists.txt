@@ -6,6 +6,7 @@ SRCS(
 )
 
 LIBS(
+  common-client
   imgui::imgui
 )
 

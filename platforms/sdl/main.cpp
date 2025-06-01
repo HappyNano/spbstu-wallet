@@ -13,7 +13,7 @@ namespace {
 } // unnamed namespace
 
 int main(int, char **) {
-    SPDLOG_INFO("android_main: %s", "start");
+    SPDLOG_INFO("android_main: start");
 
     auto mainActivity = std::make_shared< cxx::SDLMainActivity >();
     cxx::SDLMainActivity::set(mainActivity);

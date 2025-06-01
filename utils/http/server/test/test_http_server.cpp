@@ -2,6 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <sstream>
+
 using namespace cxx;
 
 namespace {

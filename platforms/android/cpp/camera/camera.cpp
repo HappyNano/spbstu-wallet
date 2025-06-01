@@ -15,7 +15,7 @@ void AndroidCamera::openCamera() {
     if (auto ma = mainActivity_.lock()) {
         ma->openCamera();
     } else {
-        SPDLOG_ERROR("AndroidCamera: openCamera: %s", "expired mainActivity");
+        SPDLOG_ERROR("AndroidCamera: openCamera: expired mainActivity");
     }
 }
 
@@ -23,6 +23,6 @@ void AndroidCamera::closeCamera() {
     if (auto ma = mainActivity_.lock()) {
         ma->closeCamera();
     } else {
-        SPDLOG_ERROR("AndroidCamera: closeCamera: %s", "expired mainActivity");
+        SPDLOG_ERROR("AndroidCamera: closeCamera: expired mainActivity");
     }
 }

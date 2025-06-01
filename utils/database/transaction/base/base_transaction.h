@@ -94,18 +94,6 @@ namespace cxx {
          * @return Optional QueryResult containing the result or empty on failure
          */
         virtual std::optional< QueryResult > executeQueryUnsafe(const std::string & query) = 0;
-
-    private:
-        /**
-         * @brief Helper method to execute a function with error checking
-         *
-         * @tparam Func Type of the function to execute
-         * @tparam ReturnType Type of the return value
-         * @param fn Function to execute
-         * @param returnFailVal Value to return if the function fails
-         * @return Result of the function or returnFailVal on failure
-         */
-        auto callWithCheck(auto fn, auto returnFailVal);
     };
 
 } // namespace cxx

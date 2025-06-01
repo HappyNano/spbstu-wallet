@@ -9,7 +9,7 @@ SRCS(
 
 LIBS(
   common-camera-lib
-  common-client_interface
+  common-client
 
   ${OpenCV_LIBS}
   imgui::imgui

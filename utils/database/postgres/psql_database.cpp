@@ -44,7 +44,7 @@ bool PsqlDatabase::connect(const std::string & connectionString) {
         conn_ = std::make_unique< pqxx::connection >(connectionString);
         return conn_->is_open();
     } catch (const std::exception & e) {
-        SPDLOG_ERROR("Connection error: {}", e.what());
+        SPDLOG_ERROR("Connection error: " + std::string(e.what()));
         return false;
     }
 }

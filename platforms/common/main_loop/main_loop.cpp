@@ -105,9 +105,9 @@ void MainLoop::drawLoginScreen() {
             userToken_ = response.token();
             isAuthenticated_ = true;
             showQRScanScreen_ = true;
-            SPDLOG_INFO("User authenticated with token: {}", userToken_);
+            SPDLOG_INFO("User authenticated with token: " + userToken_);
         } else if (response.has_error()) {
-            SPDLOG_ERROR("Authentication error: {}", response.error().message());
+            SPDLOG_ERROR("Authentication error: " + response.error().message());
         }
     }
 
@@ -178,7 +178,7 @@ void MainLoop::drawQRScanScreen() {
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
         if (!glIsTexture(textureId)) {
-            SPDLOG_ERROR("MainCppCameraHelper: {}", "Failed to generate OpenGL texture!");
+            SPDLOG_ERROR("MainCppCameraHelper: Failed to generate OpenGL texture!");
         }
 
         glGenTextures(1, &textureId2);
@@ -268,7 +268,7 @@ void MainLoop::drawQRScanScreen() {
                         showReceiptDetails_ = true;
                         camera_->closeCamera();
                     } else {
-                        SPDLOG_ERROR("Error processing QR code: {}", currentReceiptDetails_.error().message());
+                        SPDLOG_ERROR("Error processing QR code: " + currentReceiptDetails_.error().message());
                     }
 
                     lastResult.clear();
@@ -333,13 +333,13 @@ void MainLoop::drawQRScanScreen() {
 
     ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 200) * 0.5f);
     if (ImGui::Button("Отключить камеру", ImVec2(200, 30))) {
-        SPDLOG_INFO("mainLoopStep: {}", "Close Camera");
+        SPDLOG_INFO("mainLoopStep: Close Camera");
         camera_->closeCamera();
     }
 
     ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 200) * 0.5f);
     if (ImGui::Button("Включить камеру", ImVec2(200, 30))) {
-        SPDLOG_INFO("mainLoopStep: {}", "Open Camera");
+        SPDLOG_INFO("mainLoopStep: Open Camera");
         camera_->openCamera();
         lastResult.clear();
     }
@@ -364,27 +364,27 @@ void MainLoop::drawReceiptDetails() {
             const auto & r = receipt.receipt();
 
             // Display basic receipt info
-            ImGui::Text("ИНН: {}", r.inn().c_str());
-            ImGui::Text("Дата: {}", r.date_time().c_str());
-            ImGui::Text("Сумма: {} руб.", r.total_sum() / 100.0f);
+            // ImGui::Text("ИНН: {}", r.inn().c_str());
+            ImGui::Text("Дата: %s", r.t().c_str());
+            ImGui::Text("Сумма: %s руб.", std::to_string(r.s() / 100.0f).c_str());
 
-            if (!r.retailer_name().empty()) {
-                ImGui::Text("Продавец: {}", r.retailer_name().c_str());
+            if (receipt.has_retailer()) {
+                ImGui::Text("Продавец: %s", receipt.retailer().name().c_str());
             }
 
             // Display items
-            if (r.items_size() > 0) {
+            if (receipt.items_size() > 0) {
                 ImGui::Separator();
                 ImGui::Text("Товары:");
                 ImGui::Separator();
 
                 ImGui::BeginChild("ItemsList", ImVec2(ImGui::GetWindowSize().x - 20, 200), true);
 
-                for (int i = 0; i < r.items_size(); i++) {
-                    const auto & item = r.items(i);
+                for (int i = 0; i < receipt.items_size(); i++) {
+                    const auto & item = receipt.items(i);
                     ImGui::Text("%d. %s", i + 1, item.name().c_str());
                     ImGui::SameLine(ImGui::GetWindowSize().x - 150);
-                    ImGui::Text("%.2f x %d = %.2f руб.", item.price() / 100.0f, item.quantity(), item.sum() / 100.0f);
+                    ImGui::Text("%.2f x %f = %.2f руб.", item.price() / 100.0f, item.quantity(), item.sum() / 100.0f);
                 }
 
                 ImGui::EndChild();
@@ -442,17 +442,18 @@ void MainLoop::drawReceiptDetails() {
     // Create transaction
     ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) * 0.5f);
     if (ImGui::Button("Создать транзакцию", ImVec2(250, 30))) {
+        const auto & receipt = currentReceiptDetails_.receipt_data();
         wallet::TransactionData transaction;
         transaction.set_type(1); // расход
 
         if (receipt.has_receipt()) {
             const auto & r = receipt.receipt();
-            transaction.set_amount(r.total_sum());
+            transaction.set_amount(r.s());
 
             // Set timestamp from receipt date if possible
-            if (!r.date_time().empty()) {
+            if (!r.t().empty()) {
                 // Parse date_time format (ггггммддTччммcc)
-                std::string dateStr = r.date_time();
+                std::string dateStr = r.t();
                 if (dateStr.size() >= 15) {
                     int year = std::stoi(dateStr.substr(0, 4));
                     int month = std::stoi(dateStr.substr(4, 2));
@@ -609,7 +610,7 @@ void MainLoop::drawTransactionsList() {
         }
 
         for (size_t i = 0; i < categories.size(); i++) {
-            bool isSelected = (selectedCategoryId == (i + 1));
+            bool isSelected = (selectedCategoryId == static_cast<int>(i + 1));
             if (ImGui::Selectable(categories[i].name().c_str(), isSelected)) {
                 selectedCategoryId = i + 1;
             }

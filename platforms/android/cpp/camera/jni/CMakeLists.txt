@@ -9,6 +9,7 @@ LIBS(
   android-cxx-jni-camera_sink
 
   spdlog::spdlog
+  fmt::fmt
   android
 )
 

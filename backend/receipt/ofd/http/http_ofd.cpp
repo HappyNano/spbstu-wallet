@@ -34,7 +34,7 @@ auto HttpOFD::getReceiptData(const Receipt & receipt) -> ReceiptData {
         throw std::runtime_error("HttpOFD: Bad request");
     }
 
-    SPDLOG_DEBUG("New data from OFD {}", response.body);
+    SPDLOG_DEBUG("New data from OFD {0}", response.body);
 
     auto responseJson = json::parse(response.body);
     const auto & data = responseJson["data"];

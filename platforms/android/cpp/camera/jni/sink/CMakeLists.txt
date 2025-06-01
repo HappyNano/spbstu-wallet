@@ -9,6 +9,7 @@ LIBS(
   common-camera-lib
 
   spdlog::spdlog
+  fmt::fmt
   android
 )
 

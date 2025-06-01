@@ -1,215 +1,396 @@
 #include "finance_client.h"
 #include <chrono>
 
-namespace cxx {
-    using wallet::Response;
+using namespace cxx;
+using wallet::Response;
 
-    FinanceClient::FinanceClient(std::shared_ptr< grpc::Channel > channel)
-      : stub_(wallet::gateway::FinanceService::NewStub(channel)) {
+FinanceClient::FinanceClient(std::shared_ptr< grpc::Channel > channel)
+  : stub_(wallet::FinanceService::NewStub(channel)) {
+}
+
+wallet::AuthInfo FinanceClient::CreateAuthInfo(const std::string & token) {
+    wallet::AuthInfo auth;
+    auth.set_token(token);
+    return auth;
+}
+
+google::protobuf::Timestamp FinanceClient::CurrentTimestamp() {
+    google::protobuf::Timestamp timestamp;
+    auto now = std::chrono::system_clock::now();
+    auto seconds = std::chrono::duration_cast< std::chrono::seconds >(now.time_since_epoch()).count();
+    auto nanos = std::chrono::duration_cast< std::chrono::nanoseconds >(now.time_since_epoch()).count() % 1000000000;
+    timestamp.set_seconds(seconds);
+    timestamp.set_nanos(static_cast< int32_t >(nanos));
+    return timestamp;
+}
+
+wallet::AuthResponse FinanceClient::Authenticate(const std::string & device_id, const std::string & device_name) {
+    wallet::AuthRequest request;
+    request.set_device_id(device_id);
+    if (!device_name.empty()) {
+        request.set_device_name(device_name);
     }
 
-    wallet::AuthInfo FinanceClient::CreateAuthInfo(const std::string & token) {
-        wallet::AuthInfo auth;
-        auth.set_token(token);
-        return auth;
+    wallet::AuthResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->Authenticate(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
     }
 
-    google::protobuf::Timestamp FinanceClient::CurrentTimestamp() {
-        google::protobuf::Timestamp timestamp;
-        auto now = std::chrono::system_clock::now();
-        auto seconds = std::chrono::duration_cast< std::chrono::seconds >(now.time_since_epoch()).count();
-        auto nanos = std::chrono::duration_cast< std::chrono::nanoseconds >(now.time_since_epoch()).count() % 1000000000;
-        timestamp.set_seconds(seconds);
-        timestamp.set_nanos(static_cast< int32_t >(nanos));
-        return timestamp;
+    return response;
+}
+
+wallet::ReceiptDetailsResponse FinanceClient::ProcessQRCode(
+ const std::string & token,
+ const std::string & qr_code_content,
+ const google::protobuf::Timestamp & scanned_at,
+ const std::string & comment,
+ int32_t category_id,
+ bool create_transaction) {
+
+    wallet::QRCodeRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_qr_code_content(qr_code_content);
+
+    if (scanned_at.seconds() == 0) {
+        request.set_allocated_scanned_at(new google::protobuf::Timestamp(CurrentTimestamp()));
+    } else {
+        request.set_allocated_scanned_at(new google::protobuf::Timestamp(scanned_at));
     }
 
-    wallet::AuthResponse FinanceClient::Authenticate(const std::string & device_id, const std::string & device_name) {
-        wallet::AuthRequest request;
-        request.set_device_id(device_id);
-        if (!device_name.empty()) {
-            request.set_device_name(device_name);
-        }
-
-        wallet::AuthResponse response;
-        grpc::ClientContext context;
-
-        grpc::Status status = stub_->Authenticate(&context, request, &response);
-        if (!status.ok()) {
-            wallet::ErrorInfo error;
-            error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
-            error.set_message(status.error_message());
-            response.set_allocated_error(new wallet::ErrorInfo(error));
-        }
-
-        return response;
+    if (!comment.empty()) {
+        request.set_comment(comment);
     }
 
-    wallet::ReceiptDetailsResponse FinanceClient::ProcessQRCode(
-     const std::string & token,
-     const std::string & qr_code_content,
-     const google::protobuf::Timestamp & scanned_at,
-     const std::string & comment,
-     int32_t category_id,
-     bool create_transaction) {
-
-        wallet::QRCodeRequest request;
-        request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
-        request.set_qr_code_content(qr_code_content);
-
-        if (scanned_at.seconds() == 0) {
-            request.set_allocated_scanned_at(new google::protobuf::Timestamp(CurrentTimestamp()));
-        } else {
-            request.set_allocated_scanned_at(new google::protobuf::Timestamp(scanned_at));
-        }
-
-        if (!comment.empty()) {
-            request.set_comment(comment);
-        }
-
-        if (category_id > 0) {
-            request.set_category_id(category_id);
-        }
-
-        request.set_create_transaction(create_transaction);
-
-        wallet::ReceiptDetailsResponse response;
-        grpc::ClientContext context;
-
-        grpc::Status status = stub_->ProcessQRCode(&context, request, &response);
-        if (!status.ok()) {
-            wallet::ErrorInfo error;
-            error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
-            error.set_message(status.error_message());
-            response.set_allocated_error(new wallet::ErrorInfo(error));
-        }
-
-        return response;
+    if (category_id > 0) {
+        request.set_category_id(category_id);
     }
 
-    wallet::ReceiptsResponse FinanceClient::GetReceipts(
-     const std::string & token,
-     const google::protobuf::Timestamp & from_date,
-     const google::protobuf::Timestamp & to_date,
-     int32_t limit,
-     int32_t offset) {
+    request.set_create_transaction(create_transaction);
 
-        wallet::GetReceiptsRequest request;
-        request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    wallet::ReceiptDetailsResponse response;
+    grpc::ClientContext context;
 
-        if (from_date.seconds() > 0) {
-            request.set_allocated_from_date(new google::protobuf::Timestamp(from_date));
-        }
-
-        if (to_date.seconds() > 0) {
-            request.set_allocated_to_date(new google::protobuf::Timestamp(to_date));
-        }
-
-        if (limit > 0) {
-            request.set_limit(limit);
-        }
-
-        if (offset > 0) {
-            request.set_offset(offset);
-        }
-
-        wallet::ReceiptsResponse response;
-        grpc::ClientContext context;
-
-        grpc::Status status = stub_->GetReceipts(&context, request, &response);
-        if (!status.ok()) {
-            wallet::ErrorInfo error;
-            error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
-            error.set_message(status.error_message());
-            response.set_allocated_error(new wallet::ErrorInfo(error));
-        }
-
-        return response;
+    grpc::Status status = stub_->ProcessQRCode(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
     }
 
-    wallet::ReceiptDetailsResponse FinanceClient::GetReceiptDetails(const std::string & token, int32_t receipt_id) {
-        wallet::GetReceiptDetailsRequest request;
-        request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
-        request.set_receipt_id(receipt_id);
+    return response;
+}
 
-        wallet::ReceiptDetailsResponse response;
-        grpc::ClientContext context;
+wallet::ReceiptsResponse FinanceClient::GetReceipts(
+ const std::string & token,
+ const google::protobuf::Timestamp & from_date,
+ const google::protobuf::Timestamp & to_date,
+ int32_t limit,
+ int32_t offset) {
 
-        grpc::Status status = stub_->GetReceiptDetails(&context, request, &response);
-        if (!status.ok()) {
-            wallet::ErrorInfo error;
-            error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
-            error.set_message(status.error_message());
-            response.set_allocated_error(new wallet::ErrorInfo(error));
-        }
+    wallet::GetReceiptsRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
 
-        return response;
+    if (from_date.seconds() > 0) {
+        request.set_allocated_from_date(new google::protobuf::Timestamp(from_date));
     }
 
-    // Implement the remaining methods in a similar fashion...
-    wallet::CreateTransactionResponse FinanceClient::CreateTransaction(
-     const std::string & token,
-     const wallet::TransactionData & transaction) {
-
-        wallet::CreateTransactionRequest request;
-        request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
-        request.set_allocated_transaction(new wallet::TransactionData(transaction));
-
-        wallet::CreateTransactionResponse response;
-        grpc::ClientContext context;
-
-        grpc::Status status = stub_->CreateTransaction(&context, request, &response);
-        if (!status.ok()) {
-            wallet::ErrorInfo error;
-            error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
-            error.set_message(status.error_message());
-            response.set_allocated_error(new wallet::ErrorInfo(error));
-        }
-
-        return response;
+    if (to_date.seconds() > 0) {
+        request.set_allocated_to_date(new google::protobuf::Timestamp(to_date));
     }
 
-
-    Response FinanceClient::UpdateTransaction(
-     const std::string & token,
-     const wallet::TransactionData & transaction) {
-
-        wallet::UpdateTransactionRequest request;
-        request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
-        request.set_allocated_transaction(new wallet::TransactionData(transaction));
-
-        Response response;
-        grpc::ClientContext context;
-
-        grpc::Status status = stub_->UpdateTransaction(&context, request, &response);
-        if (!status.ok()) {
-            wallet::ErrorInfo error;
-            error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
-            error.set_message(status.error_message());
-            response.set_allocated_error(new wallet::ErrorInfo(error));
-        }
-
-        return response;
+    if (limit > 0) {
+        request.set_limit(limit);
     }
 
-    wallet::category::CategoriesResponse FinanceClient::GetCategories(const std::string & token) {
-        wallet::category::GetCategoriesRequest request;
-        request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
-
-        wallet::category::CategoriesResponse response;
-        grpc::ClientContext context;
-
-        grpc::Status status = stub_->GetCategories(&context, request, &response);
-        if (!status.ok()) {
-            wallet::ErrorInfo error;
-            error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
-            error.set_message(status.error_message());
-            response.set_allocated_error(new wallet::ErrorInfo(error));
-        }
-
-        return response;
+    if (offset > 0) {
+        request.set_offset(offset);
     }
 
-    // Other methods would be implemented similarly
+    wallet::ReceiptsResponse response;
+    grpc::ClientContext context;
 
-} // namespace cxx
+    grpc::Status status = stub_->GetReceipts(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::ReceiptDetailsResponse FinanceClient::GetReceiptDetails(const std::string & token, int32_t receipt_id) {
+    wallet::GetReceiptDetailsRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_receipt_id(receipt_id);
+
+    wallet::ReceiptDetailsResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->GetReceiptDetails(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::CreateTransactionResponse FinanceClient::CreateTransaction(
+ const std::string & token,
+ const wallet::TransactionData & transaction) {
+
+    wallet::CreateTransactionRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_allocated_transaction(new wallet::TransactionData(transaction));
+
+    wallet::CreateTransactionResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->CreateTransaction(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+Response FinanceClient::UpdateTransaction(
+ const std::string & token,
+ const wallet::TransactionData & transaction) {
+
+    wallet::UpdateTransactionRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_allocated_transaction(new wallet::TransactionData(transaction));
+
+    Response response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->UpdateTransaction(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::Response FinanceClient::DeleteTransaction(const std::string & token, int32_t transaction_id) {
+    wallet::DeleteTransactionRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_transaction_id(transaction_id);
+
+    wallet::Response response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->DeleteTransaction(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::TransactionsResponse FinanceClient::GetTransactions(
+ const std::string & token,
+ const google::protobuf::Timestamp & from_date,
+ const google::protobuf::Timestamp & to_date,
+ int32_t type,
+ int32_t category_id,
+ int32_t limit,
+ int32_t offset) {
+
+    wallet::GetTransactionsRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+
+    if (from_date.seconds() > 0) {
+        request.set_allocated_from_date(new google::protobuf::Timestamp(from_date));
+    }
+
+    if (to_date.seconds() > 0) {
+        request.set_allocated_to_date(new google::protobuf::Timestamp(to_date));
+    }
+
+    if (type >= 0) {
+        request.set_type(type);
+    }
+
+    if (category_id > 0) {
+        request.set_category_id(category_id);
+    }
+
+    if (limit > 0) {
+        request.set_limit(limit);
+    }
+
+    if (offset > 0) {
+        request.set_offset(offset);
+    }
+
+    wallet::TransactionsResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->GetTransactions(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::TransactionDetailsResponse FinanceClient::GetTransactionDetails(const std::string & token, int32_t transaction_id) {
+    wallet::GetTransactionDetailsRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_transaction_id(transaction_id);
+
+    wallet::TransactionDetailsResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->GetTransactionDetails(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::CategoriesResponse FinanceClient::GetCategories(const std::string & token) {
+    wallet::GetCategoriesRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+
+    wallet::CategoriesResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->GetCategories(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::ManageCategoryResponse FinanceClient::CreateCategory(
+ const std::string & token,
+ const std::string & name) {
+
+    wallet::ManageCategoryRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_name(name);
+
+    wallet::ManageCategoryResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->ManageCategory(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::ManageCategoryResponse FinanceClient::UpdateCategory(
+ const std::string & token,
+ int32_t category_id,
+ const std::string & name) {
+
+    wallet::ManageCategoryRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_id(category_id);
+    request.set_name(name);
+
+    wallet::ManageCategoryResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->ManageCategory(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::Response FinanceClient::DeleteCategory(
+ const std::string & token,
+ int32_t category_id) {
+
+    wallet::ManageCategoryRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+    request.set_id(category_id);
+    request.set_name("");
+
+    wallet::Response response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->DeleteCategory(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}
+
+wallet::StatisticsResponse FinanceClient::GetStatistics(
+ const std::string & token,
+ const google::protobuf::Timestamp & from_date,
+ const google::protobuf::Timestamp & to_date) {
+
+    wallet::GetStatisticsRequest request;
+    request.set_allocated_auth(new wallet::AuthInfo(CreateAuthInfo(token)));
+
+    if (from_date.seconds() > 0) {
+        request.set_allocated_from_date(new google::protobuf::Timestamp(from_date));
+    }
+
+    if (to_date.seconds() > 0) {
+        request.set_allocated_to_date(new google::protobuf::Timestamp(to_date));
+    }
+
+    wallet::StatisticsResponse response;
+    grpc::ClientContext context;
+
+    grpc::Status status = stub_->GetStatistics(&context, request, &response);
+    if (!status.ok()) {
+        wallet::ErrorInfo error;
+        error.set_code(wallet::ErrorInfo_ErrorCode_SERVER_ERROR);
+        error.set_message(status.error_message());
+        response.set_allocated_error(new wallet::ErrorInfo(error));
+    }
+
+    return response;
+}

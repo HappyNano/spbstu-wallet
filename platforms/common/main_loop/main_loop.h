@@ -53,8 +53,8 @@ namespace cxx {
         void drawLoginScreen();
         void drawQRScanScreen();
         void drawReceiptDetails();
-        static void drawTransactionsList();
-        static void drawStatistics();
+        void drawTransactionsList();
+        void drawStatistics();
         void drawNavigation();
     };
 } // namespace cxx

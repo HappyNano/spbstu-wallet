@@ -2,7 +2,14 @@
   "dependencies": [
     "gtest",
     "nlohmann-json",
-    "spdlog",
+    {
+      "name": "fmt",
+      "version>=": "9.1.0"
+    },
+    {
+      "name": "spdlog",
+      "version>=": "1.11.0"
+    },
     "sqlite3",
     "libpqxx",
     "protobuf",

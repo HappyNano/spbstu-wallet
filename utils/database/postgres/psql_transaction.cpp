@@ -53,7 +53,7 @@ std::optional< QueryResult > PsqlTransaction::executeQueryUnsafe(const std::stri
 
         return queryResult;
     } catch (const std::exception & e) {
-        SPDLOG_ERROR("Query execution error: {}", e.what());
+        SPDLOG_ERROR("Query execution error: " + std::string(e.what()));
         return std::nullopt;
     }
 }

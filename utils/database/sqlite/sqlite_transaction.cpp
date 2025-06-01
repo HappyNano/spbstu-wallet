@@ -33,7 +33,7 @@ std::optional< QueryResult > SQLiteTransaction::executeQueryUnsafe(const std::st
     int rc = sqlite3_prepare_v2(conn_, query.c_str(), -1, &stmt, nullptr);
 
     if (rc != SQLITE_OK) {
-        SPDLOG_ERROR("SQLite prepare error: {}", sqlite3_errmsg(conn_));
+        SPDLOG_ERROR("SQLite prepare error: " + std::string(sqlite3_errmsg(conn_)));
         return std::nullopt;
     }
 
@@ -86,7 +86,7 @@ std::optional< QueryResult > SQLiteTransaction::executeQueryUnsafe(const std::st
     sqlite3_finalize(stmt);
 
     if (rc != SQLITE_DONE) {
-        SPDLOG_ERROR("SQLite step error: {}", sqlite3_errmsg(conn_));
+        SPDLOG_ERROR("SQLite step error: " + std::string(sqlite3_errmsg(conn_)));
         return std::nullopt;
     }
 

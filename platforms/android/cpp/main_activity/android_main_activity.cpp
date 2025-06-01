@@ -17,11 +17,11 @@
 namespace {
 
     template < typename Class, typename Func >
-    int safeCallMethod(Class * cls, Func func, std::string_view fmt) {
+    int safeCallMethod(Class * cls, Func func, std::string_view) {
         try {
             (cls->*func)();
         } catch (const std::exception & e) {
-            SPDLOG_ERROR(fmt::runtime(fmt), e.what());
+            // SPDLOG_ERROR(fmt::format(fmt::runtime(fmt), e.what()).c_str());
             return -1;
         }
 
@@ -78,27 +78,27 @@ void cxx::AndroidMainActivity::initImpl() {
 
     ANativeWindow_acquire(app_->window);
 
-    SPDLOG_INFO("MainActivity: %s", "Initialization");
+    SPDLOG_INFO("MainActivity: Initialization");
 
     // Initialize EGL
     // This is mostly boilerplate code for EGL...
     {
         eglDisplay_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         if (eglDisplay_ == EGL_NO_DISPLAY) {
-            SPDLOG_ERROR("MainActivity: %s", "eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
+            SPDLOG_ERROR("MainActivity: eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
         }
 
         if (eglInitialize(eglDisplay_, nullptr, nullptr) != EGL_TRUE) {
-            SPDLOG_ERROR("MainActivity: %s", "eglInitialize() returned with an error");
+            SPDLOG_ERROR("MainActivity: eglInitialize() returned with an error");
         }
 
         const EGLint eglAttributes[] = { EGL_BLUE_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_RED_SIZE, 8, EGL_DEPTH_SIZE, 24, EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_NONE };
         EGLint numConfigs = 0;
         if (eglChooseConfig(eglDisplay_, eglAttributes, nullptr, 0, &numConfigs) != EGL_TRUE) {
-            SPDLOG_ERROR("MainActivity: %s", "eglChooseConfig() returned with an error");
+            SPDLOG_ERROR("MainActivity: eglChooseConfig() returned with an error");
         }
         if (numConfigs == 0) {
-            SPDLOG_ERROR("MainActivity: %s", "eglChooseConfig() returned 0 matching config");
+            SPDLOG_ERROR("MainActivity: eglChooseConfig() returned 0 matching config");
         }
 
         // Get the first matching config
@@ -113,7 +113,7 @@ void cxx::AndroidMainActivity::initImpl() {
         eglContext_ = eglCreateContext(eglDisplay_, eglConfig, EGL_NO_CONTEXT, eglContextAttributes);
 
         if (eglContext_ == EGL_NO_CONTEXT) {
-            SPDLOG_ERROR("MainActivity: %s", "eglCreateContext() returned EGL_NO_CONTEXT");
+            SPDLOG_ERROR("MainActivity: eglCreateContext() returned EGL_NO_CONTEXT");
         }
 
         eglSurface_ = eglCreateWindowSurface(eglDisplay_, eglConfig, app_->window, nullptr);
@@ -161,12 +161,12 @@ void cxx::AndroidMainActivity::initImpl() {
     // Arbitrary scale-up
     ImGui::GetStyle().ScaleAllSizes(3.0f);
 
-    SPDLOG_INFO("MainActivity: %s", "Successful initialized");
+    SPDLOG_INFO("MainActivity: Successful initialized");
     initialized_ = true;
 }
 
 void cxx::AndroidMainActivity::shutdownImpl() {
-    SPDLOG_INFO("MainActivity: %s", "Shutdown");
+    SPDLOG_INFO("MainActivity: Shutdown");
     if (!initialized_) {
         return;
     }
